@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { getTrip } from "@/lib/data";
 import { tripDay } from "@/lib/status";
 
@@ -8,7 +9,7 @@ export async function Header() {
 
   return (
     <header className="fixed top-0 inset-x-0 z-30 h-14 flex items-center justify-between px-4 sm:px-6 bg-bg/95 backdrop-blur border-b border-border">
-      <div className="flex items-center gap-2">
+      <Link href="/" className="flex items-center gap-2">
         <Image
           src="/kara/header-logo.png"
           alt=""
@@ -17,12 +18,12 @@ export async function Header() {
           className="rounded-full"
           priority
         />
-        <span className="font-display text-lg sm:text-xl text-text-primary">
+        <span className="font-title font-bold text-lg sm:text-xl text-text-primary">
           Where in the world is Kara?
         </span>
-      </div>
+      </Link>
       {dayLabel && (
-        <span className="text-xs font-medium text-text-secondary bg-surface-muted rounded-full px-3 py-1">
+        <span className="text-sm font-bold text-text-primary bg-surface-muted rounded-full px-4 py-1.5">
           Day {dayLabel.day}
         </span>
       )}

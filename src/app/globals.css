@@ -12,8 +12,8 @@
   --color-accent-hover: #C24F3D;
 
   --color-pin-current: #D65F4C;
-  --color-pin-upcoming: #8B9199;
-  --color-pin-visited: #A39D8F;
+  --color-pin-upcoming: #6E8FA3;
+  --color-pin-visited: #A8A398;
   --color-pin-personal: #8A6E8C;
 }
 
@@ -33,8 +33,9 @@
   --color-pin-visited: var(--color-pin-visited);
   --color-pin-personal: var(--color-pin-personal);
 
-  --font-display: var(--font-fraunces);
-  --font-body: var(--font-karla);
+  --font-display: var(--font-inter);
+  --font-body: var(--font-inter);
+  --font-title: var(--font-nunito);
 }
 
 html, body {
@@ -44,11 +45,15 @@ html, body {
 body {
   background: var(--color-bg);
   color: var(--color-text-primary);
-  font-family: var(--font-karla), sans-serif;
+  font-family: var(--font-inter), sans-serif;
+  /* Inter character variants: zero=slashed 0, cv01=alternate 1,
+     cv03=open 6, cv04=open 9, cv05=lower-case l with tail */
+  font-feature-settings: "zero" 1, "cv01" 1, "cv03" 1, "cv04" 1, "cv05" 1;
 }
 
-h1, h2, h3, h4, .font-display {
-  font-family: var(--font-fraunces), serif;
+.font-title {
+  font-family: var(--font-nunito), sans-serif;
+  font-feature-settings: normal;
 }
 
 /* Mapbox popup/attribution tweaks to match the muted palette */
@@ -59,11 +64,17 @@ h1, h2, h3, h4, .font-display {
 
 .kara-pin {
   cursor: pointer;
+}
+
+/* Mapbox sets an inline transform on the marker element itself for
+   positioning, so the hover scale has to live on the child SVG instead. */
+.kara-pin > svg {
+  display: block;
   transition: transform 0.15s ease;
   transform-origin: bottom center;
 }
 
-.kara-pin:hover {
+.kara-pin:hover > svg {
   transform: scale(1.18);
 }
 

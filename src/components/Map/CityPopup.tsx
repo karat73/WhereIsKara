@@ -13,13 +13,6 @@ type Props = {
   onClose: () => void;
 };
 
-const pillTextColor: Record<string, string> = {
-  current: "#FFFFFF",
-  upcoming: "#FFFFFF",
-  visited: "#FFFFFF",
-  personal: "#FFFFFF",
-};
-
 export function CityPopup({ city, latestUpdate, onClose }: Props) {
   const status = getCityStatus(city);
   const localTime = useLocalClock(city.timezone);
@@ -33,35 +26,44 @@ export function CityPopup({ city, latestUpdate, onClose }: Props) {
   return (
     <div
       className="
-        fixed z-40 bg-surface border-border shadow-2xl overflow-y-auto
-        inset-x-0 bottom-0 h-[68vh] rounded-t-2xl border-t
+        fixed z-40 bg-surface shadow-2xl overflow-y-auto
+        inset-x-0 bottom-0 h-[68vh] rounded-t-2xl border-t-[3px]
         pb-[env(safe-area-inset-bottom)]
         sm:inset-x-auto sm:right-0 sm:top-14 sm:bottom-11 sm:h-auto
-        sm:w-[42%] sm:min-w-[380px] sm:max-w-[560px] sm:rounded-none sm:border-t-0 sm:border-l
+        sm:w-[42%] sm:min-w-[380px] sm:max-w-[560px] sm:rounded-none
+        sm:border-t-0 sm:border-l-[3px]
         animate-[slideIn_0.25s_ease-out]
       "
+      style={{ borderColor: statusColor[status] }}
     >
       <div className="p-6 sm:p-8">
         <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-3 flex-wrap">
-            <h2 className="font-display text-3xl text-text-primary">{city.name}</h2>
-            <span
-              className="text-xs font-medium rounded-full px-3 py-1"
-              style={{ backgroundColor: statusColor[status], color: pillTextColor[status] }}
-            >
-              {formatDateRangePill(city.arrival_datetime, city.departure_datetime)}
-            </span>
-          </div>
+          <h2 className="font-display text-3xl text-text-primary">{city.name}</h2>
           <button
             onClick={onClose}
             aria-label="Close"
-            className="shrink-0 w-8 h-8 rounded-full bg-surface-muted flex items-center justify-center text-text-secondary hover:text-text-primary transition-colors"
+            className="shrink-0 w-9 h-9 rounded-full border flex items-center justify-center transition-colors"
+            style={{ backgroundColor: "#EEF0EA", borderColor: "#D2CDBE" }}
           >
-            &times;
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M1 1L13 13M13 1L1 13"
+                stroke="#1E2320"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
+            </svg>
           </button>
         </div>
 
-        <p className="mt-2 text-sm text-text-secondary">{metaParts.join(" · ")}</p>
+        <span
+          className="inline-block mt-3 text-sm font-bold rounded-full px-4 py-1.5"
+          style={{ backgroundColor: statusColor[status], color: "#FFFFFF" }}
+        >
+          {formatDateRangePill(city.arrival_datetime, city.departure_datetime)}
+        </span>
+
+        <p className="mt-3 text-sm text-text-secondary">{metaParts.join(" · ")}</p>
 
         <dl className="mt-5 divide-y divide-border border-y border-border">
           {city.suggested_foods && (

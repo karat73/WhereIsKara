@@ -1,20 +1,19 @@
 import type { Metadata } from "next";
-import { Fraunces, Karla } from "next/font/google";
+import { Inter, Nunito } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 
-const fraunces = Fraunces({
-  variable: "--font-fraunces",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  style: ["normal", "italic"],
+  weight: ["400", "500", "600", "700"],
 });
 
-const karla = Karla({
-  variable: "--font-karla",
+const nunito = Nunito({
+  variable: "--font-nunito",
   subsets: ["latin"],
-  weight: ["400", "500", "700"],
+  weight: ["600", "700", "800"],
 });
 
 export const metadata: Metadata = {
@@ -29,7 +28,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${fraunces.variable} ${karla.variable} h-full antialiased`}>
+    <html lang="en" className={`${inter.variable} ${nunito.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-bg text-text-primary">
         <Header />
         <main className="flex-1 min-h-0">{children}</main>
