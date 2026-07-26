@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/check-map-loads",
+      "schedule": "0 8 * * *"
+    }
+  ]
+}

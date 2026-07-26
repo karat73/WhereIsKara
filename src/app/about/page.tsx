@@ -33,15 +33,25 @@ export default function AboutPage() {
 
         <h2 className="font-display text-2xl mt-10 mb-3">Still to come</h2>
         <ul className="space-y-2 text-text-secondary leading-relaxed list-disc pl-5">
-          <li>Pixel-Arina and Pixel-Kate</li>
-          <li>A little wave animation before the map settles</li>
-          <li>Running distance tally</li>
-          <li>Trips from before this sabbatical, mapped in</li>
+          <li>Pixel-Arina and Pixel-Kate.</li>
+          <li>A little wave animation before the map settles.</li>
+          <li>Running distance tally.</li>
+          <li>Trips from before this sabbatical, mapped in.</li>
         </ul>
 
         <h2 className="font-display text-2xl mt-10 mb-3">Built with</h2>
         <p className="text-text-secondary leading-relaxed">
           Next.js, Supabase, Mapbox, Vercel. Designed in Figma, built with Claude Code.
+        </p>
+
+        <p className="mt-10 text-sm text-text-muted">
+          Bugs, ideas, anything -{" "}
+          <a
+            href="mailto:feedback@whereiskara.com"
+            className="text-accent hover:text-accent-hover underline"
+          >
+            feedback@whereiskara.com
+          </a>
         </p>
       </article>
     </div>

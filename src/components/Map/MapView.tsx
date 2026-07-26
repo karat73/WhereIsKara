@@ -33,6 +33,10 @@ export function MapView({ cities, onSelectCity, selectedCityId }: Props) {
     });
     mapRef.current = map;
 
+    // Self-tracked map load count, so we get an early warning before
+    // hitting Mapbox's billed usage tiers. Fire-and-forget, non-blocking.
+    fetch("/api/track/map-load", { method: "POST" }).catch(() => {});
+
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "bottom-right");
 
     const now = new Date();
