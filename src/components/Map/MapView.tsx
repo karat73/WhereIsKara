@@ -134,7 +134,12 @@ export function MapView({ cities, onSelectCity, selectedCityId }: Props) {
       });
 
       if (currentCity) {
-        map.flyTo({ center: [currentCity.lng, currentCity.lat], zoom: 4, duration: 0 });
+        map.flyTo({
+          center: [currentCity.lng, currentCity.lat],
+          zoom: 4,
+          duration: 4000,
+          essential: true,
+        });
       }
     });
 
