@@ -1,6 +1,8 @@
 import { getAllDailyUpdates, getCities } from "@/lib/data";
 import { formatFullDate } from "@/lib/format";
 
+export const dynamic = "force-dynamic";
+
 export default async function TimelinePage() {
   const [updates, cities] = await Promise.all([getAllDailyUpdates(), getCities()]);
   const cityById = Object.fromEntries(cities.map((c) => [c.id, c]));

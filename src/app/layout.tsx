@@ -22,6 +22,9 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://whereiskara.com"),
 };
 
+// Header/Footer show the live trip-day counter, which must stay fresh across requests.
+export const dynamic = "force-dynamic";
+
 export default function RootLayout({
   children,
 }: Readonly<{
