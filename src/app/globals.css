@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+:root {
+  --color-bg: #E9E6DD;
+  --color-surface: #E3E0D5;
+  --color-surface-muted: #DAD6C9;
+  --color-border: #D2CDBE;
+  --color-text-primary: #1E2320;
+  --color-text-secondary: #6B6659;
+  --color-text-muted: #948E7E;
+  --color-accent: #D65F4C;
+  --color-accent-hover: #C24F3D;
+
+  --color-pin-current: #D65F4C;
+  --color-pin-upcoming: #8B9199;
+  --color-pin-visited: #A39D8F;
+  --color-pin-personal: #8A6E8C;
+}
+
+@theme inline {
+  --color-bg: var(--color-bg);
+  --color-surface: var(--color-surface);
+  --color-surface-muted: var(--color-surface-muted);
+  --color-border: var(--color-border);
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-muted: var(--color-text-muted);
+  --color-accent: var(--color-accent);
+  --color-accent-hover: var(--color-accent-hover);
+
+  --color-pin-current: var(--color-pin-current);
+  --color-pin-upcoming: var(--color-pin-upcoming);
+  --color-pin-visited: var(--color-pin-visited);
+  --color-pin-personal: var(--color-pin-personal);
+
+  --font-display: var(--font-fraunces);
+  --font-body: var(--font-karla);
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+  font-family: var(--font-karla), sans-serif;
+}
+
+h1, h2, h3, h4, .font-display {
+  font-family: var(--font-fraunces), serif;
+}
+
+/* Mapbox popup/attribution tweaks to match the muted palette */
+.mapboxgl-ctrl-logo,
+.mapboxgl-ctrl-attrib {
+  opacity: 0.6;
+}
+
+.kara-pin {
+  cursor: pointer;
+  transition: transform 0.15s ease;
+  transform-origin: bottom center;
+}
+
+.kara-pin:hover {
+  transform: scale(1.18);
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@media (min-width: 640px) {
+  @keyframes slideIn {
+    from {
+      transform: translateX(100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+}
