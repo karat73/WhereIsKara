@@ -30,7 +30,11 @@ export async function GET(req: NextRequest) {
   const alertTo = process.env.ALERT_EMAIL_TO;
 
   async function sendAlert(subject: string, body: string): Promise<string | null> {
-    if (!resendApiKey || !alertTo) return "RESEND_API_KEY or ALERT_EMAIL_TO not set";
+    const missing: string[] = [];
+    if (!resendApiKey) missing.push("RESEND_API_KEY");
+    if (!alertTo) missing.push("ALERT_EMAIL_TO");
+    if (!resendApiKey || !alertTo) return `Missing env var(s): ${missing.join(", ")}`;
+
     const resend = new Resend(resendApiKey);
     const result = await resend.emails.send({
       from: "Where in the world is Kara <onboarding@resend.dev>",
