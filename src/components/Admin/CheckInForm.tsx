@@ -5,13 +5,22 @@ import type { City } from "@/lib/types";
 
 type Props = {
   cities: City[];
+  captionsByCity: Record<string, string>;
 };
 
-export function CheckInForm({ cities }: Props) {
-  const [cityId, setCityId] = useState(String(cities[0]?.id ?? ""));
-  const [caption, setCaption] = useState("");
+export function CheckInForm({ cities, captionsByCity }: Props) {
+  const initialCityId = String(cities[0]?.id ?? "");
+  const [cityId, setCityId] = useState(initialCityId);
+  const [caption, setCaption] = useState(captionsByCity[initialCityId] ?? "");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
+
+  function handleCityChange(newCityId: string) {
+    setCityId(newCityId);
+    setCaption(captionsByCity[newCityId] ?? "");
+    setStatus("idle");
+    setError(null);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -31,7 +40,6 @@ export function CheckInForm({ cities }: Props) {
       return;
     }
 
-    setCaption("");
     setStatus("success");
   }
 
@@ -41,7 +49,7 @@ export function CheckInForm({ cities }: Props) {
         <label className="block text-sm text-text-secondary mb-1.5">City</label>
         <select
           value={cityId}
-          onChange={(e) => setCityId(e.target.value)}
+          onChange={(e) => handleCityChange(e.target.value)}
           className="w-full rounded-lg border border-border bg-surface px-4 py-2.5 text-text-primary focus:outline-none focus:ring-2 focus:ring-accent"
         >
           {cities.map((city) => (
@@ -65,7 +73,7 @@ export function CheckInForm({ cities }: Props) {
 
       {error && <p className="text-sm text-accent">{error}</p>}
       {status === "success" && (
-        <p className="text-sm text-text-secondary">Posted — it&rsquo;s live on the map.</p>
+        <p className="text-sm text-text-secondary">Saved — it&rsquo;s live on the map.</p>
       )}
 
       <button
@@ -73,7 +81,7 @@ export function CheckInForm({ cities }: Props) {
         disabled={status === "loading" || !caption.trim() || !cityId}
         className="rounded-lg bg-accent hover:bg-accent-hover disabled:opacity-50 text-white font-medium px-5 py-2.5 transition-colors"
       >
-        {status === "loading" ? "Posting…" : "Post update"}
+        {status === "loading" ? "Saving…" : "Save update"}
       </button>
     </form>
   );

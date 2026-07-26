@@ -12,7 +12,6 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json().catch(() => null);
   const cityId = body?.cityId;
-  const date = body?.date;
   const caption = body?.caption;
 
   if (typeof cityId !== "string" || !cityId) {
@@ -22,11 +21,33 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "caption is required" }, { status: 400 });
   }
 
-  const { error } = await supabaseAdmin.from("daily_updates").insert({
-    city_id: cityId,
-    date: typeof date === "string" && date ? date : new Date().toISOString(),
-    caption: caption.trim(),
-  });
+  const now = new Date();
+  const todayDate = now.toISOString().slice(0, 10);
+
+  // One running update per city: edit the existing row if there is one,
+  // rather than accumulating a new row every check-in.
+  const { data: existing, error: selectError } = await supabaseAdmin
+    .from("daily_updates")
+    .select("id")
+    .eq("city_id", cityId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (selectError) {
+    return NextResponse.json({ error: selectError.message }, { status: 500 });
+  }
+
+  const { error } = existing
+    ? await supabaseAdmin
+        .from("daily_updates")
+        .update({ caption: caption.trim(), date: todayDate, created_at: now.toISOString() })
+        .eq("id", existing.id)
+    : await supabaseAdmin.from("daily_updates").insert({
+        city_id: cityId,
+        date: todayDate,
+        caption: caption.trim(),
+      });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -20,7 +20,7 @@ export async function getAllDailyUpdates(): Promise<DailyUpdate[]> {
   const { data, error } = await supabase
     .from("daily_updates")
     .select("*")
-    .order("date", { ascending: false });
+    .order("created_at", { ascending: false });
   if (error) throw error;
   return (data ?? []).map((row) => ({ ...row, id: String(row.id), city_id: String(row.city_id) }));
 }

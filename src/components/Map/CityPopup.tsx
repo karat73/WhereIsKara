@@ -115,7 +115,9 @@ export function CityPopup({ city, latestUpdate, onClose }: Props) {
             <p className="font-display italic text-xl text-text-primary leading-snug">
               &ldquo;{latestUpdate!.caption}&rdquo;
             </p>
-            <p className="mt-2 text-xs text-text-muted">{formatRelativeTime(latestUpdate!.date)}</p>
+            <p className="mt-2 text-xs text-text-muted">
+              {formatRelativeTime(latestUpdate!.created_at)}
+            </p>
           </div>
         )}
       </div>

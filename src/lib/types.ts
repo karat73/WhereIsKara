@@ -24,6 +24,7 @@ export type DailyUpdate = {
   caption: string;
   photo_urls: string[] | null;
   mood_tag: string | null;
+  created_at: string;
 };
 
 export type Trip = {

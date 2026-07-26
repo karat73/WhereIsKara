@@ -6,12 +6,10 @@ const MONTHS = [
 export function formatDateRangePill(arrivalISO: string, departureISO: string) {
   const a = new Date(arrivalISO);
   const d = new Date(departureISO);
-  const yy = String(d.getUTCFullYear()).slice(2);
+  const ay = String(a.getUTCFullYear()).slice(2);
+  const dy = String(d.getUTCFullYear()).slice(2);
 
-  if (a.getUTCMonth() === d.getUTCMonth() && a.getUTCFullYear() === d.getUTCFullYear()) {
-    return `${a.getUTCDate()}-${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${yy}`;
-  }
-  return `${a.getUTCDate()} ${MONTHS[a.getUTCMonth()]}-${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${yy}`;
+  return `${a.getUTCDate()} ${MONTHS[a.getUTCMonth()]} ${ay} - ${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${dy}`;
 }
 
 export function formatFullDate(iso: string) {
