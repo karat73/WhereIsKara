@@ -25,23 +25,13 @@ export function MapView({ cities, onSelectCity, selectedCityId }: Props) {
 
     const map = new mapboxgl.Map({
       container: containerRef.current,
-      style: "mapbox://styles/mapbox/light-v11",
+      style: "mapbox://styles/kt7373/cmrsbvkcy008y01qk68g6h7c1",
       projection: "globe",
       zoom: 1.4,
       center: [20, 20],
       preserveDrawingBuffer: true,
     });
     mapRef.current = map;
-
-    map.on("style.load", () => {
-      map.setFog({
-        color: "#E9E6DD",
-        "high-color": "#c9d6e0",
-        "horizon-blend": 0.02,
-        "space-color": "#1E2320",
-        "star-intensity": 0.15,
-      });
-    });
 
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "bottom-right");
 
