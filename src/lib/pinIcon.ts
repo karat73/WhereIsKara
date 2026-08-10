@@ -1,8 +1,8 @@
-import type { CityStatus } from "./types";
+import type { PinStatus } from "./types";
 
-// Teardrop pin for trip/current/upcoming/visited cities; the same teardrop
-// with a house glyph (instead of a dot) for personal pins.
-export function pinSvg(status: CityStatus, color: string) {
+// Teardrop pin for every status; colour carries the meaning. Personal pins
+// get a house glyph instead of a plain dot.
+export function pinSvg(status: PinStatus, color: string) {
   if (status === "personal") {
     return `
       <svg width="28" height="38" viewBox="0 0 28 38" xmlns="http://www.w3.org/2000/svg">

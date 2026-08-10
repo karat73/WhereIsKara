@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { isValidSessionToken, COOKIE_NAME } from "@/lib/adminAuth";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { pickRepresentativeVisit } from "@/lib/status";
+import type { Visit } from "@/lib/types";
 
 export async function POST(req: NextRequest) {
   const cookieStore = await cookies();
@@ -21,15 +23,34 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "caption is required" }, { status: 400 });
   }
 
+  const { data: visitRows, error: visitsError } = await supabaseAdmin
+    .from("visits")
+    .select("*")
+    .eq("city_id", cityId);
+
+  if (visitsError) {
+    return NextResponse.json({ error: visitsError.message }, { status: 500 });
+  }
+
+  const visits: Visit[] = (visitRows ?? []).map((v) => ({
+    ...v,
+    id: String(v.id),
+    city_id: String(v.city_id),
+  }));
+  const visit = pickRepresentativeVisit(visits);
+  if (!visit) {
+    return NextResponse.json({ error: "This city has no visits yet" }, { status: 400 });
+  }
+
   const now = new Date();
   const todayDate = now.toISOString().slice(0, 10);
 
-  // One running update per city: edit the existing row if there is one,
+  // One running update per visit: edit the existing row if there is one,
   // rather than accumulating a new row every check-in.
   const { data: existing, error: selectError } = await supabaseAdmin
     .from("daily_updates")
     .select("id")
-    .eq("city_id", cityId)
+    .eq("visit_id", visit.id)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -44,7 +65,7 @@ export async function POST(req: NextRequest) {
         .update({ caption: caption.trim(), date: todayDate, created_at: now.toISOString() })
         .eq("id", existing.id)
     : await supabaseAdmin.from("daily_updates").insert({
-        city_id: cityId,
+        visit_id: visit.id,
         date: todayDate,
         caption: caption.trim(),
       });

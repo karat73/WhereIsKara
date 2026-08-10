@@ -1,23 +1,48 @@
 @import "tailwindcss";
 
 :root {
-  --color-bg: #E9E6DD;
-  --color-surface: #E3E0D5;
-  --color-surface-muted: #DAD6C9;
-  --color-border: #D2CDBE;
-  --color-text-primary: #1E2320;
-  --color-text-secondary: #6B6659;
-  --color-text-muted: #948E7E;
-  --color-accent: #D65F4C;
-  --color-accent-hover: #C24F3D;
+  /* v1.1 design system tokens */
+  --color-paper: #F1ECDF;
+  --color-card: #F6F2E8;
+  --color-ink: #23201B;
+  --color-muted: #5F5847;
+  --color-blue: #2C4A7C;
+  --color-mustard: #C99A3C;
+  --color-mustard-hover: #B48A34;
+  --color-stone: #B7AD95;
+  --color-oxblood: #6B3F4E;
+  --color-line: #DDD2B8;
 
-  --color-pin-current: #D65F4C;
-  --color-pin-upcoming: #6E8FA3;
-  --color-pin-visited: #A8A398;
-  --color-pin-personal: #8A6E8C;
+  /* legacy names kept as aliases so existing components keep working
+     without a full class-name rewrite; values point at the tokens above */
+  --color-bg: var(--color-paper);
+  --color-surface: var(--color-card);
+  --color-surface-muted: var(--color-line);
+  --color-border: var(--color-line);
+  --color-text-primary: var(--color-ink);
+  --color-text-secondary: var(--color-muted);
+  --color-text-muted: var(--color-muted);
+  --color-accent: var(--color-mustard);
+  --color-accent-hover: var(--color-mustard-hover);
+
+  --color-pin-current: var(--color-mustard);
+  --color-pin-upcoming: var(--color-blue);
+  --color-pin-visited: var(--color-stone);
+  --color-pin-personal: var(--color-oxblood);
 }
 
 @theme inline {
+  --color-paper: var(--color-paper);
+  --color-card: var(--color-card);
+  --color-ink: var(--color-ink);
+  --color-muted: var(--color-muted);
+  --color-blue: var(--color-blue);
+  --color-mustard: var(--color-mustard);
+  --color-mustard-hover: var(--color-mustard-hover);
+  --color-stone: var(--color-stone);
+  --color-oxblood: var(--color-oxblood);
+  --color-line: var(--color-line);
+
   --color-bg: var(--color-bg);
   --color-surface: var(--color-surface);
   --color-surface-muted: var(--color-surface-muted);
@@ -33,9 +58,9 @@
   --color-pin-visited: var(--color-pin-visited);
   --color-pin-personal: var(--color-pin-personal);
 
-  --font-display: var(--font-inter);
-  --font-body: var(--font-inter);
-  --font-title: var(--font-nunito);
+  --font-display: var(--font-plex-sans);
+  --font-body: var(--font-plex-sans);
+  --font-mono: var(--font-plex-mono);
 }
 
 html, body {
@@ -45,15 +70,12 @@ html, body {
 body {
   background: var(--color-bg);
   color: var(--color-text-primary);
-  font-family: var(--font-inter), sans-serif;
-  /* Inter character variants: zero=slashed 0, cv01=alternate 1,
-     cv03=open 6, cv04=open 9, cv05=lower-case l with tail */
-  font-feature-settings: "zero" 1, "cv01" 1, "cv03" 1, "cv04" 1, "cv05" 1;
+  font-family: var(--font-plex-sans), sans-serif;
 }
 
-.font-title {
-  font-family: var(--font-nunito), sans-serif;
-  font-feature-settings: normal;
+.font-mono-num {
+  font-family: var(--font-plex-mono), monospace;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Mapbox popup/attribution tweaks to match the muted palette */
@@ -64,18 +86,6 @@ body {
 
 .kara-pin {
   cursor: pointer;
-}
-
-/* Mapbox sets an inline transform on the marker element itself for
-   positioning, so the hover scale has to live on the child SVG instead. */
-.kara-pin > svg {
-  display: block;
-  transition: transform 0.15s ease;
-  transform-origin: bottom center;
-}
-
-.kara-pin:hover > svg {
-  transform: scale(1.18);
 }
 
 @keyframes slideIn {
@@ -95,5 +105,13 @@ body {
     to {
       transform: translateX(0);
     }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

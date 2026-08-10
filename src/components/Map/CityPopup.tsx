@@ -1,54 +1,87 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useLocalClock } from "@/hooks/useLocalClock";
 import { useCityWeather } from "@/hooks/useCityWeather";
-import { formatDateRangePill, formatRelativeTime } from "@/lib/format";
-import { getCityStatus, statusColor } from "@/lib/status";
-import type { City, DailyUpdate } from "@/lib/types";
+import { formatBadgeDate, formatCompactRange, formatRelativeTime } from "@/lib/format";
+import { getPinStatus, getVisitStatus, pickRepresentativeVisit, statusColor } from "@/lib/status";
+import type { CityWithVisits, DailyUpdate, VisitStatus } from "@/lib/types";
 
 type Props = {
-  city: City;
-  latestUpdate: DailyUpdate | null;
+  city: CityWithVisits;
+  latestUpdateByVisit: Record<string, DailyUpdate>;
   onClose: () => void;
 };
 
-export function CityPopup({ city, latestUpdate, onClose }: Props) {
-  const status = getCityStatus(city);
+const badgeStyle: Record<VisitStatus, { bg: string; border: string; text: string }> = {
+  current: { bg: "var(--color-mustard)", border: "var(--color-mustard)", text: "#FFFFFF" },
+  visited: { bg: "transparent", border: "var(--color-stone)", text: "var(--color-ink)" },
+  upcoming: { bg: "transparent", border: "var(--color-blue)", text: "var(--color-blue)" },
+};
+
+export function CityPopup({ city, latestUpdateByVisit, onClose }: Props) {
+  const now = new Date();
+  const representativeVisit = pickRepresentativeVisit(city.visits, now);
+  const visitStatus: VisitStatus = representativeVisit
+    ? getVisitStatus(representativeVisit, now)
+    : "upcoming";
+  const pinStatus = getPinStatus(city, representativeVisit);
+
   const localTime = useLocalClock(city.timezone);
   const tempC = useCityWeather(city.lat, city.lng);
 
-  const showUpdate = status !== "upcoming" && latestUpdate;
+  const latestUpdate = representativeVisit ? latestUpdateByVisit[representativeVisit.id] : null;
+  const showUpdate = visitStatus !== "upcoming" && !!latestUpdate;
+
   const metaParts = [city.country, tempC != null ? `${tempC}°C` : null, localTime || null].filter(
     Boolean
   );
 
+  const otherVisits = city.visits
+    .filter((v) => v.id !== representativeVisit?.id)
+    .sort((a, b) => a.start_date.localeCompare(b.start_date));
+  const pastOthers = otherVisits.filter((v) => getVisitStatus(v, now) === "visited");
+  const futureOthers = otherVisits.filter((v) => getVisitStatus(v, now) === "upcoming");
+  const alsoHereParts = [
+    pastOthers.length > 0
+      ? `Also here: ${pastOthers.map((v) => formatCompactRange(v.start_date, v.end_date)).join(", ")}`
+      : null,
+    futureOthers.length > 0
+      ? `Back here: ${futureOthers.map((v) => formatCompactRange(v.start_date, v.end_date)).join(", ")}`
+      : null,
+  ].filter(Boolean);
+
+  const badge = badgeStyle[visitStatus];
+
   return (
     <div
       className="
-        fixed z-40 bg-surface shadow-2xl overflow-y-auto
-        inset-x-0 bottom-0 h-[68vh] rounded-t-2xl border-t-[3px]
+        fixed z-40 bg-surface overflow-y-auto
+        inset-x-0 bottom-0 h-[68vh] rounded-t-[14px] border-t-[3px]
         pb-[env(safe-area-inset-bottom)]
         sm:inset-x-auto sm:right-0 sm:top-14 sm:bottom-11 sm:h-auto
         sm:w-[42%] sm:min-w-[380px] sm:max-w-[560px] sm:rounded-none
         sm:border-t-0 sm:border-l-[3px]
         animate-[slideIn_0.25s_ease-out]
       "
-      style={{ borderColor: statusColor[status] }}
+      style={{ borderColor: statusColor[pinStatus] }}
     >
       <div className="p-6 sm:p-8">
         <div className="flex items-start justify-between gap-3">
-          <h2 className="font-display text-3xl text-text-primary">{city.name}</h2>
+          <h2 className="font-display italic font-semibold text-[31px] text-text-primary">
+            {city.name}
+          </h2>
           <button
             onClick={onClose}
             aria-label="Close"
             className="shrink-0 w-9 h-9 rounded-full border flex items-center justify-center transition-colors"
-            style={{ backgroundColor: "#EEF0EA", borderColor: "#D2CDBE" }}
+            style={{ backgroundColor: "var(--color-card)", borderColor: "var(--color-line)" }}
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path
                 d="M1 1L13 13M13 1L1 13"
-                stroke="#1E2320"
+                stroke="var(--color-ink)"
                 strokeWidth="1.5"
                 strokeLinecap="round"
               />
@@ -56,37 +89,43 @@ export function CityPopup({ city, latestUpdate, onClose }: Props) {
           </button>
         </div>
 
-        <span
-          className="inline-block mt-3 text-sm font-bold rounded-full px-4 py-1.5"
-          style={{ backgroundColor: statusColor[status], color: "#FFFFFF" }}
-        >
-          {formatDateRangePill(city.arrival_datetime, city.departure_datetime)}
-        </span>
+        {representativeVisit && (
+          <span
+            className="font-mono-num inline-block mt-3 text-[13px] font-medium uppercase rounded-[2px] px-3 py-1 border"
+            style={{ backgroundColor: badge.bg, borderColor: badge.border, color: badge.text }}
+          >
+            {formatBadgeDate(representativeVisit.start_date, representativeVisit.end_date)}
+          </span>
+        )}
 
-        <p className="mt-3 text-sm text-text-secondary">{metaParts.join(" · ")}</p>
+        {alsoHereParts.length > 0 && (
+          <p className="mt-2 text-[13px] text-text-secondary">{alsoHereParts.join(" · ")}</p>
+        )}
+
+        <p className="mt-3 text-[16px] text-text-secondary tabular-nums">{metaParts.join(" · ")}</p>
 
         <dl className="mt-5 divide-y divide-border border-y border-border">
           {city.suggested_foods && (
-            <div className="flex items-center justify-between py-2.5 text-sm">
+            <div className="flex items-center justify-between py-2.5 text-[16px]">
               <dt className="text-text-secondary">Eating</dt>
               <dd className="font-medium text-text-primary">{city.suggested_foods}</dd>
             </div>
           )}
           {city.suggested_activities && (
-            <div className="flex items-center justify-between py-2.5 text-sm">
+            <div className="flex items-center justify-between py-2.5 text-[16px]">
               <dt className="text-text-secondary">{city.verb || "Seeing"}</dt>
               <dd className="font-medium text-text-primary">{city.suggested_activities}</dd>
             </div>
           )}
           {city.local_animal_name && (
-            <div className="flex items-center justify-between py-2.5 text-sm">
+            <div className="flex items-center justify-between py-2.5 text-[16px]">
               <dt className="text-text-secondary">Befriending</dt>
               <dd className="font-medium text-text-primary">{city.local_animal_name}</dd>
             </div>
           )}
         </dl>
 
-        <div className="mt-5 relative aspect-[16/10] rounded-xl overflow-hidden bg-surface-muted">
+        <div className="mt-5 relative aspect-[16/10] overflow-hidden bg-surface-muted">
           {city.city_image_url ? (
             <Image
               src={city.city_image_url}
@@ -96,28 +135,34 @@ export function CityPopup({ city, latestUpdate, onClose }: Props) {
               unoptimized
             />
           ) : (
-            <div className="absolute inset-0 flex items-center justify-center text-text-muted text-sm">
+            <div className="absolute inset-0 flex items-center justify-center text-text-muted text-[13px]">
               Photo coming soon
             </div>
           )}
           <div className="absolute inset-x-0 bottom-0 h-[80%] flex justify-center items-end pointer-events-none">
             <div className="relative h-full aspect-square">
-              <Image src="/kara/kara-overlay.png" alt="" fill className="object-contain drop-shadow-md" />
+              <Image src="/kara/kara-overlay.png" alt="" fill className="object-contain" />
             </div>
           </div>
         </div>
 
         {showUpdate && (
           <div className="mt-6 pt-5 border-t border-border">
-            <p className="text-xs tracking-wide uppercase text-text-muted mb-2">
-              Kara&rsquo;s update
-            </p>
-            <p className="font-display italic text-xl text-text-primary leading-snug">
+            <div className="flex items-baseline justify-between gap-3">
+              <p className="text-[13px] tracking-wide uppercase text-text-muted">Last update</p>
+              <p className="font-mono-num text-[13px] text-text-muted">
+                {formatRelativeTime(latestUpdate!.created_at)}
+              </p>
+            </div>
+            <p className="mt-2 font-display italic text-[20px] text-text-primary leading-snug">
               &ldquo;{latestUpdate!.caption}&rdquo;
             </p>
-            <p className="mt-2 text-xs text-text-muted">
-              {formatRelativeTime(latestUpdate!.created_at)}
-            </p>
+            <Link
+              href="/timeline"
+              className="mt-3 inline-block text-[13px] text-blue border-b border-blue pb-px hover:opacity-80"
+            >
+              See all updates
+            </Link>
           </div>
         )}
       </div>
