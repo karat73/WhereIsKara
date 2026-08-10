@@ -17,9 +17,19 @@ export type City = {
   city_image_url: string | null;
 };
 
-export type DailyUpdate = {
+export type Visit = {
   id: string;
   city_id: string;
+  start_date: string;
+  end_date: string | null;
+  created_at: string;
+};
+
+export type CityWithVisits = City & { visits: Visit[] };
+
+export type DailyUpdate = {
+  id: string;
+  visit_id: string;
   date: string;
   caption: string;
   photo_urls: string[] | null;
@@ -33,6 +43,12 @@ export type Trip = {
   tagline: string | null;
   start_date: string;
   end_date: string;
+  last_checked_in: string | null;
 };
 
-export type CityStatus = "upcoming" | "current" | "visited" | "personal";
+// Visit-level status, derived from dates, never stored.
+export type VisitStatus = "upcoming" | "current" | "visited";
+
+// Pin-level status: same as VisitStatus, plus "personal" which is a
+// property of the city, not something derived from a visit's dates.
+export type PinStatus = VisitStatus | "personal";

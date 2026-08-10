@@ -1,4 +1,4 @@
-import { getCities, getLatestUpdateByCity } from "@/lib/data";
+import { getCitiesWithVisits, getLatestUpdateByVisit, getTrip } from "@/lib/data";
 import { MapExperience } from "@/components/Map/MapExperience";
 
 // This page shows live status (current city, latest check-ins) that changes
@@ -6,14 +6,15 @@ import { MapExperience } from "@/components/Map/MapExperience";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [cities, latestUpdateByCity] = await Promise.all([
-    getCities(),
-    getLatestUpdateByCity(),
+  const [cities, latestUpdateByVisit, trip] = await Promise.all([
+    getCitiesWithVisits(),
+    getLatestUpdateByVisit(),
+    getTrip(),
   ]);
 
   return (
     <div className="relative h-screen w-screen overflow-hidden">
-      <MapExperience cities={cities} latestUpdateByCity={latestUpdateByCity} />
+      <MapExperience cities={cities} latestUpdateByVisit={latestUpdateByVisit} trip={trip} />
     </div>
   );
 }

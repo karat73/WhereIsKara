@@ -1,35 +1,87 @@
-import { getAllDailyUpdates, getCities } from "@/lib/data";
-import { formatFullDate } from "@/lib/format";
+import {
+  getAllDailyUpdates,
+  getCitiesWithVisits,
+  getTrip,
+} from "@/lib/data";
+import {
+  formatDayMonth,
+  formatYear,
+  ordinalStayLabel,
+  tripDayNumber,
+} from "@/lib/format";
+import type { Visit } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
 export default async function TimelinePage() {
-  const [updates, cities] = await Promise.all([getAllDailyUpdates(), getCities()]);
-  const cityById = Object.fromEntries(cities.map((c) => [c.id, c]));
+  const [updates, cities, trip] = await Promise.all([
+    getAllDailyUpdates(),
+    getCitiesWithVisits(),
+    getTrip(),
+  ]);
+
+  const visitById: Record<string, Visit> = {};
+  const cityByVisitId: Record<string, (typeof cities)[number]> = {};
+  const visitOrdinalById: Record<string, number> = {};
+
+  for (const city of cities) {
+    const sortedVisits = [...city.visits].sort((a, b) => a.start_date.localeCompare(b.start_date));
+    sortedVisits.forEach((visit, index) => {
+      visitById[visit.id] = visit;
+      cityByVisitId[visit.id] = city;
+      visitOrdinalById[visit.id] = index + 1;
+    });
+  }
 
   return (
     <div className="min-h-screen pt-20 pb-20 px-4 sm:px-6">
       <div className="max-w-2xl mx-auto">
-        <h1 className="font-display text-4xl mb-2">Timeline</h1>
-        <p className="text-text-secondary mb-10">Every update, most recent first.</p>
+        <h1 className="font-display text-[39px] mb-8">Timeline</h1>
 
         {updates.length === 0 && (
-          <p className="text-text-muted">No updates posted yet — check back soon.</p>
+          <p className="text-text-muted">No updates posted yet, check back soon.</p>
         )}
 
-        <ol className="space-y-8">
+        <ol className="divide-y divide-border">
           {updates.map((update) => {
-            const city = cityById[update.city_id];
+            const visit = visitById[update.visit_id];
+            const city = cityByVisitId[update.visit_id];
+            if (!visit || !city) return null;
+
+            const ordinal = visitOrdinalById[visit.id];
+            const showStayTag = city.visits.length > 1 && ordinal > 1;
+            const dayNumber = trip ? tripDayNumber(trip.start_date, update.date) : null;
+
             return (
-              <li key={update.id} className="border-l-2 border-border pl-5 relative">
-                <span className="absolute -left-[7px] top-1 w-3 h-3 rounded-full bg-accent" />
-                <p className="text-xs text-text-muted mb-1">
-                  {formatFullDate(update.date)}
-                  {city ? ` · ${city.name}` : ""}
-                </p>
-                <p className="font-display italic text-lg text-text-primary leading-snug">
-                  &ldquo;{update.caption}&rdquo;
-                </p>
+              <li key={update.id} className="py-6">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <p className="tabular-nums">
+                      <span className="text-[20px] font-semibold text-text-primary">
+                        {formatDayMonth(update.date)}
+                      </span>{" "}
+                      <span className="text-[16px] text-text-secondary">{formatYear(update.date)}</span>
+                    </p>
+                    {dayNumber != null && (
+                      <span className="font-mono-num shrink-0 text-[13px] uppercase border rounded-[2px] px-2 py-0.5 text-blue border-blue">
+                        DAY {String(dayNumber).padStart(3, "0")}
+                      </span>
+                    )}
+                  </div>
+
+                  <p className="mt-1 font-display italic text-[16px] text-text-primary flex items-center gap-2 flex-wrap">
+                    {city.name}
+                    {showStayTag && (
+                      <span className="not-italic font-sans text-[11px] uppercase text-blue">
+                        {ordinalStayLabel(ordinal)}
+                      </span>
+                    )}
+                  </p>
+
+                  <p className="mt-2 font-display italic text-[20px] text-text-primary leading-snug">
+                    &ldquo;{update.caption}&rdquo;
+                  </p>
+                </div>
               </li>
             );
           })}

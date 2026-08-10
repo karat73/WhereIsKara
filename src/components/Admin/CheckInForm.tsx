@@ -50,7 +50,7 @@ export function CheckInForm({ cities, captionsByCity }: Props) {
         <select
           value={cityId}
           onChange={(e) => handleCityChange(e.target.value)}
-          className="w-full rounded-lg border border-border bg-surface px-4 py-2.5 text-text-primary focus:outline-none focus:ring-2 focus:ring-accent"
+          className="w-full rounded-[2px] border border-border bg-surface px-4 py-2.5 text-text-primary focus:outline-none focus:ring-2 focus:ring-accent"
         >
           {cities.map((city) => (
             <option key={city.id} value={city.id}>
@@ -67,19 +67,19 @@ export function CheckInForm({ cities, captionsByCity }: Props) {
           onChange={(e) => setCaption(e.target.value)}
           rows={4}
           placeholder="Buffet hopping in search of vegan pork"
-          className="w-full rounded-lg border border-border bg-surface px-4 py-2.5 text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent resize-none"
+          className="w-full rounded-[2px] border border-border bg-surface px-4 py-2.5 text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent resize-none"
         />
       </div>
 
       {error && <p className="text-sm text-accent">{error}</p>}
       {status === "success" && (
-        <p className="text-sm text-text-secondary">Saved — it&rsquo;s live on the map.</p>
+        <p className="text-sm text-text-secondary">Saved, it&rsquo;s live on the map.</p>
       )}
 
       <button
         type="submit"
         disabled={status === "loading" || !caption.trim() || !cityId}
-        className="rounded-lg bg-accent hover:bg-accent-hover disabled:opacity-50 text-white font-medium px-5 py-2.5 transition-colors"
+        className="rounded-[2px] bg-accent hover:bg-accent-hover disabled:opacity-50 text-white font-medium px-5 py-2.5 transition-colors"
       >
         {status === "loading" ? "Saving…" : "Save update"}
       </button>

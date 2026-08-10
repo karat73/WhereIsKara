@@ -38,13 +38,13 @@ export function LoginForm() {
         onChange={(e) => setPassword(e.target.value)}
         placeholder="Password"
         autoFocus
-        className="w-full rounded-lg border border-border bg-surface px-4 py-2.5 text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent"
+        className="w-full rounded-[2px] border border-border bg-surface px-4 py-2.5 text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent"
       />
       {error && <p className="text-sm text-accent">{error}</p>}
       <button
         type="submit"
         disabled={loading || !password}
-        className="w-full rounded-lg bg-accent hover:bg-accent-hover disabled:opacity-50 text-white font-medium py-2.5 transition-colors"
+        className="w-full rounded-[2px] bg-accent hover:bg-accent-hover disabled:opacity-50 text-white font-medium py-2.5 transition-colors"
       >
         {loading ? "Signing in…" : "Sign in"}
       </button>

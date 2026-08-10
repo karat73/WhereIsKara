@@ -3,19 +3,29 @@
 import { useEffect, useRef } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import type { City, CityStatus } from "@/lib/types";
-import { getCityStatus, statusColor } from "@/lib/status";
+import type { CityWithVisits, PinStatus, Trip } from "@/lib/types";
+import {
+  getPinStatus,
+  getVisitStatus,
+  isWithinTrip,
+  pickRepresentativeVisit,
+  statusColor,
+} from "@/lib/status";
 import { pinSvg } from "@/lib/pinIcon";
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
 
+export type MapFilterMode = "sabbatical" | "all-time";
+
 type Props = {
-  cities: City[];
-  onSelectCity: (city: City) => void;
+  cities: CityWithVisits[];
+  trip: Trip | null;
+  mode: MapFilterMode;
+  onSelectCity: (city: CityWithVisits) => void;
   selectedCityId: string | null;
 };
 
-export function MapView({ cities, onSelectCity, selectedCityId }: Props) {
+export function MapView({ cities, trip, mode, onSelectCity, selectedCityId }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<Record<string, mapboxgl.Marker>>({});
@@ -39,21 +49,34 @@ export function MapView({ cities, onSelectCity, selectedCityId }: Props) {
 
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "bottom-right");
 
+    // The route line and the initial flyTo are always scoped to the
+    // sabbatical, regardless of which pins are currently shown - drawing a
+    // line across 20 years of unrelated trips would be meaningless.
     const now = new Date();
     const tripCities = cities.filter((c) => c.pin_type === "trip");
-    const currentCity = tripCities.find((c) => getCityStatus(c, now) === "current");
 
-    const traveled = tripCities
-      .filter((c) => {
-        const s = getCityStatus(c, now);
-        return s === "visited" || s === "current";
-      })
-      .sort((a, b) => a.arrival_datetime.localeCompare(b.arrival_datetime));
+    const withRepVisit = tripCities.map((city) => ({
+      city,
+      visit: pickRepresentativeVisit(
+        city.visits.filter((v) => isWithinTrip(v, trip)),
+        now
+      ),
+    }));
 
-    const allUpcoming = tripCities
-      .filter((c) => getCityStatus(c, now) === "upcoming")
-      .sort((a, b) => a.arrival_datetime.localeCompare(b.arrival_datetime));
-    const upcomingPath = currentCity ? [currentCity, ...allUpcoming] : allUpcoming;
+    const currentEntry = withRepVisit.find(
+      (x) => x.visit && getVisitStatus(x.visit, now) === "current"
+    );
+
+    const traveled = withRepVisit
+      .filter((x) => x.visit && getVisitStatus(x.visit, now) !== "upcoming")
+      .sort((a, b) => a.visit!.start_date.localeCompare(b.visit!.start_date))
+      .map((x) => x.city);
+
+    const allUpcoming = withRepVisit
+      .filter((x) => x.visit && getVisitStatus(x.visit, now) === "upcoming")
+      .sort((a, b) => a.visit!.start_date.localeCompare(b.visit!.start_date))
+      .map((x) => x.city);
+    const upcomingPath = currentEntry ? [currentEntry.city, ...allUpcoming] : allUpcoming;
 
     map.on("load", () => {
       map.addSource("route-traveled", {
@@ -69,7 +92,7 @@ export function MapView({ cities, onSelectCity, selectedCityId }: Props) {
         type: "line",
         source: "route-traveled",
         paint: {
-          "line-color": "#948E7E",
+          "line-color": "#B7AD95",
           "line-width": 1.75,
         },
       });
@@ -87,7 +110,7 @@ export function MapView({ cities, onSelectCity, selectedCityId }: Props) {
         type: "line",
         source: "route-upcoming",
         paint: {
-          "line-color": "#8B9199",
+          "line-color": "#2C4A7C",
           "line-width": 1.75,
           "line-dasharray": [0, 4, 3],
         },
@@ -99,7 +122,7 @@ export function MapView({ cities, onSelectCity, selectedCityId }: Props) {
       arrowCanvas.width = arrowSize;
       arrowCanvas.height = arrowSize;
       const arrowCtx = arrowCanvas.getContext("2d")!;
-      arrowCtx.fillStyle = "#8B9199";
+      arrowCtx.fillStyle = "#2C4A7C";
       arrowCtx.beginPath();
       arrowCtx.moveTo(3, 5);
       arrowCtx.lineTo(17, 10);
@@ -127,9 +150,9 @@ export function MapView({ cities, onSelectCity, selectedCityId }: Props) {
         },
       });
 
-      if (currentCity) {
+      if (currentEntry) {
         map.flyTo({
-          center: [currentCity.lng, currentCity.lat],
+          center: [currentEntry.city.lng, currentEntry.city.lat],
           zoom: 4,
           duration: 4000,
           essential: true,
@@ -156,8 +179,24 @@ export function MapView({ cities, onSelectCity, selectedCityId }: Props) {
     markersRef.current = {};
 
     const now = new Date();
-    cities.forEach((city) => {
-      const status: CityStatus = getCityStatus(city, now);
+
+    // In "sabbatical" mode, only show cities with a visit inside the trip
+    // window (plus the personal/home pin, which is always shown). In
+    // "all-time" mode, every city with any visit shows, using its overall
+    // representative visit (which may be historic).
+    const visibleCities = cities.filter((city) => {
+      if (city.pin_type === "personal") return true;
+      if (mode === "all-time") return true;
+      return city.visits.some((v) => isWithinTrip(v, trip));
+    });
+
+    visibleCities.forEach((city) => {
+      const visitsForStatus =
+        mode === "sabbatical" && city.pin_type !== "personal"
+          ? city.visits.filter((v) => isWithinTrip(v, trip))
+          : city.visits;
+      const representativeVisit = pickRepresentativeVisit(visitsForStatus, now);
+      const status: PinStatus = getPinStatus(city, representativeVisit);
       const el = document.createElement("div");
       el.className = "kara-pin";
       el.innerHTML = pinSvg(status, statusColor[status]);
@@ -178,7 +217,7 @@ export function MapView({ cities, onSelectCity, selectedCityId }: Props) {
     return () => {
       Object.values(markersRef.current).forEach((m) => m.remove());
     };
-  }, [cities, onSelectCity]);
+  }, [cities, trip, mode, onSelectCity]);
 
   useEffect(() => {
     const map = mapRef.current;
