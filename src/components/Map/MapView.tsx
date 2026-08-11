@@ -59,21 +59,22 @@ export function MapView({ cities, trip, mode, onSelectCity, selectedCityId }: Pr
       city,
       visit: pickRepresentativeVisit(
         city.visits.filter((v) => isWithinTrip(v, trip)),
+        city.timezone,
         now
       ),
     }));
 
     const currentEntry = withRepVisit.find(
-      (x) => x.visit && getVisitStatus(x.visit, now) === "current"
+      (x) => x.visit && getVisitStatus(x.visit, x.city.timezone, now) === "current"
     );
 
     const traveled = withRepVisit
-      .filter((x) => x.visit && getVisitStatus(x.visit, now) !== "upcoming")
+      .filter((x) => x.visit && getVisitStatus(x.visit, x.city.timezone, now) !== "upcoming")
       .sort((a, b) => a.visit!.start_date.localeCompare(b.visit!.start_date))
       .map((x) => x.city);
 
     const allUpcoming = withRepVisit
-      .filter((x) => x.visit && getVisitStatus(x.visit, now) === "upcoming")
+      .filter((x) => x.visit && getVisitStatus(x.visit, x.city.timezone, now) === "upcoming")
       .sort((a, b) => a.visit!.start_date.localeCompare(b.visit!.start_date))
       .map((x) => x.city);
     const upcomingPath = currentEntry ? [currentEntry.city, ...allUpcoming] : allUpcoming;
@@ -92,7 +93,7 @@ export function MapView({ cities, trip, mode, onSelectCity, selectedCityId }: Pr
         type: "line",
         source: "route-traveled",
         paint: {
-          "line-color": "#B7AD95",
+          "line-color": "#8F9296",
           "line-width": 1.75,
         },
       });
@@ -195,8 +196,8 @@ export function MapView({ cities, trip, mode, onSelectCity, selectedCityId }: Pr
         mode === "sabbatical" && city.pin_type !== "personal"
           ? city.visits.filter((v) => isWithinTrip(v, trip))
           : city.visits;
-      const representativeVisit = pickRepresentativeVisit(visitsForStatus, now);
-      const status: PinStatus = getPinStatus(city, representativeVisit);
+      const representativeVisit = pickRepresentativeVisit(visitsForStatus, city.timezone, now);
+      const status: PinStatus = getPinStatus(city, representativeVisit, now);
       const el = document.createElement("div");
       el.className = "kara-pin";
       el.innerHTML = pinSvg(status, statusColor[status]);

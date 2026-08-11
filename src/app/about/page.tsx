@@ -16,8 +16,8 @@ export default async function AboutPage() {
   const now = new Date();
   const traveledCities = cities
     .filter((c) => c.pin_type === "trip")
-    .map((c) => ({ city: c, visit: pickRepresentativeVisit(c.visits, now) }))
-    .filter((x) => x.visit && getVisitStatus(x.visit, now) !== "upcoming")
+    .map((c) => ({ city: c, visit: pickRepresentativeVisit(c.visits, c.timezone, now) }))
+    .filter((x) => x.visit && getVisitStatus(x.visit, x.city.timezone, now) !== "upcoming")
     .sort((a, b) => a.visit!.start_date.localeCompare(b.visit!.start_date))
     .map((x) => x.city);
 

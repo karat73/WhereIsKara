@@ -22,11 +22,11 @@ const badgeStyle: Record<VisitStatus, { bg: string; border: string; text: string
 
 export function CityPopup({ city, latestUpdateByVisit, onClose }: Props) {
   const now = new Date();
-  const representativeVisit = pickRepresentativeVisit(city.visits, now);
+  const representativeVisit = pickRepresentativeVisit(city.visits, city.timezone, now);
   const visitStatus: VisitStatus = representativeVisit
-    ? getVisitStatus(representativeVisit, now)
+    ? getVisitStatus(representativeVisit, city.timezone, now)
     : "upcoming";
-  const pinStatus = getPinStatus(city, representativeVisit);
+  const pinStatus = getPinStatus(city, representativeVisit, now);
 
   const localTime = useLocalClock(city.timezone);
   const tempC = useCityWeather(city.lat, city.lng);
@@ -41,8 +41,10 @@ export function CityPopup({ city, latestUpdateByVisit, onClose }: Props) {
   const otherVisits = city.visits
     .filter((v) => v.id !== representativeVisit?.id)
     .sort((a, b) => a.start_date.localeCompare(b.start_date));
-  const pastOthers = otherVisits.filter((v) => getVisitStatus(v, now) === "visited");
-  const futureOthers = otherVisits.filter((v) => getVisitStatus(v, now) === "upcoming");
+  const pastOthers = otherVisits.filter((v) => getVisitStatus(v, city.timezone, now) === "visited");
+  const futureOthers = otherVisits.filter(
+    (v) => getVisitStatus(v, city.timezone, now) === "upcoming"
+  );
   const alsoHereParts = [
     pastOthers.length > 0
       ? `Also here: ${pastOthers.map((v) => formatCompactRange(v.start_date, v.end_date)).join(", ")}`

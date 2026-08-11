@@ -32,7 +32,7 @@ export default async function AdminPage() {
 
   const captionsByCity: Record<string, string> = {};
   for (const city of cities) {
-    const visit = pickRepresentativeVisit(city.visits);
+    const visit = pickRepresentativeVisit(city.visits, city.timezone);
     const update = visit ? latestUpdateByVisit[visit.id] : undefined;
     if (update) captionsByCity[city.id] = update.caption;
   }

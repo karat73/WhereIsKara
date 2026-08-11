@@ -1,25 +1,42 @@
 import type { City, PinStatus, Trip, Visit, VisitStatus } from "./types";
 
-export function getVisitStatus(visit: Visit, now: Date = new Date()): VisitStatus {
-  const start = new Date(visit.start_date);
-  if (now < start) return "upcoming";
+// visit.start_date/end_date are plain local calendar dates for the city
+// they belong to (e.g. "2026-08-10"), not UTC instants. Comparing them
+// against a raw UTC "now" causes status to flip a day early or late
+// depending on the city's offset from UTC - so "now" has to be converted
+// to that city's local calendar date first.
+function localDateString(date: Date, timezone: string): string {
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  return formatter.format(date); // en-CA gives YYYY-MM-DD
+}
 
-  if (visit.end_date) {
-    const end = new Date(visit.end_date);
-    end.setUTCHours(23, 59, 59, 999); // end_date is a plain date, so "visited" only once that day has fully passed
-    if (now > end) return "visited";
-  }
-
+export function getVisitStatus(
+  visit: Visit,
+  timezone: string,
+  now: Date = new Date()
+): VisitStatus {
+  const nowLocal = localDateString(now, timezone);
+  if (nowLocal < visit.start_date) return "upcoming";
+  if (visit.end_date && nowLocal > visit.end_date) return "visited";
   return "current";
 }
 
 // A city can have multiple visits. The one badge/pin needs a single
 // representative visit: current first, else the most recent past visit,
 // else the nearest upcoming one.
-export function pickRepresentativeVisit(visits: Visit[], now: Date = new Date()): Visit | null {
+export function pickRepresentativeVisit(
+  visits: Visit[],
+  timezone: string,
+  now: Date = new Date()
+): Visit | null {
   if (visits.length === 0) return null;
 
-  const withStatus = visits.map((v) => ({ v, status: getVisitStatus(v, now) }));
+  const withStatus = visits.map((v) => ({ v, status: getVisitStatus(v, timezone, now) }));
 
   const current = withStatus.find((x) => x.status === "current");
   if (current) return current.v;
@@ -46,10 +63,14 @@ export const statusColor: Record<PinStatus, string> = {
 
 // Pin colour: personal cities are always oxblood regardless of their
 // visit's dates; everything else is coloured by its representative visit.
-export function getPinStatus(city: City, representativeVisit: Visit | null): PinStatus {
+export function getPinStatus(
+  city: City,
+  representativeVisit: Visit | null,
+  now: Date = new Date()
+): PinStatus {
   if (city.pin_type === "personal") return "personal";
   if (!representativeVisit) return "upcoming";
-  return getVisitStatus(representativeVisit);
+  return getVisitStatus(representativeVisit, city.timezone, now);
 }
 
 // A visit "belongs to" the sabbatical if it starts within the trip's date

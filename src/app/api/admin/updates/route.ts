@@ -23,13 +23,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "caption is required" }, { status: 400 });
   }
 
-  const { data: visitRows, error: visitsError } = await supabaseAdmin
-    .from("visits")
-    .select("*")
-    .eq("city_id", cityId);
+  const [{ data: visitRows, error: visitsError }, { data: cityRow, error: cityError }] =
+    await Promise.all([
+      supabaseAdmin.from("visits").select("*").eq("city_id", cityId),
+      supabaseAdmin.from("cities").select("timezone").eq("id", cityId).maybeSingle(),
+    ]);
 
   if (visitsError) {
     return NextResponse.json({ error: visitsError.message }, { status: 500 });
+  }
+  if (cityError || !cityRow) {
+    return NextResponse.json({ error: cityError?.message ?? "City not found" }, { status: 400 });
   }
 
   const visits: Visit[] = (visitRows ?? []).map((v) => ({
@@ -37,7 +41,7 @@ export async function POST(req: NextRequest) {
     id: String(v.id),
     city_id: String(v.city_id),
   }));
-  const visit = pickRepresentativeVisit(visits);
+  const visit = pickRepresentativeVisit(visits, cityRow.timezone);
   if (!visit) {
     return NextResponse.json({ error: "This city has no visits yet" }, { status: 400 });
   }

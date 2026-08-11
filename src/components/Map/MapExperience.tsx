@@ -1,9 +1,12 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { formatDistanceToNowStrict } from "date-fns";
 import { MapView, type MapFilterMode } from "./MapView";
 import { CityPopup } from "./CityPopup";
 import type { CityWithVisits, DailyUpdate, Trip } from "@/lib/types";
+
+const SIXTY_HOURS_MS = 60 * 60 * 60 * 1000;
 
 type Props = {
   cities: CityWithVisits[];
@@ -21,6 +24,13 @@ export function MapExperience({ cities, latestUpdateByVisit, trip }: Props) {
 
   const selectedCity = cities.find((c) => c.id === selectedCityId) ?? null;
 
+  const checkedInValue = trip?.last_checked_in
+    ? formatDistanceToNowStrict(new Date(trip.last_checked_in), { addSuffix: true })
+    : null;
+  const checkedInStale = trip?.last_checked_in
+    ? Date.now() - new Date(trip.last_checked_in).getTime() > SIXTY_HOURS_MS
+    : false;
+
   return (
     <div className="absolute inset-0">
       <MapView
@@ -31,7 +41,7 @@ export function MapExperience({ cities, latestUpdateByVisit, trip }: Props) {
         selectedCityId={selectedCityId}
       />
 
-      <div className="absolute left-4 bottom-16 z-10 flex rounded-[2px] border border-line overflow-hidden bg-surface">
+      <div className="absolute left-4 top-[calc(3.5rem+0.75rem)] z-10 flex rounded-[2px] border border-line overflow-hidden bg-surface">
         <button
           onClick={() => setMode("sabbatical")}
           className={`px-3 py-1.5 text-[13px] transition-colors ${
@@ -53,6 +63,19 @@ export function MapExperience({ cities, latestUpdateByVisit, trip }: Props) {
           All time
         </button>
       </div>
+
+      {checkedInValue && (
+        <div className="absolute right-4 top-[calc(3.5rem+0.75rem)] z-10 rounded-[2px] border border-line bg-surface px-3 py-1.5 text-right leading-tight">
+          <p className="text-[11px] uppercase text-text-secondary">Check-in</p>
+          <p
+            className={`font-mono-num text-[13px] whitespace-nowrap ${
+              checkedInStale ? "text-text-secondary" : "text-text-primary"
+            }`}
+          >
+            {checkedInValue}
+          </p>
+        </div>
+      )}
 
       {selectedCity && (
         <CityPopup
