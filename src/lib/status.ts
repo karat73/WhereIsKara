@@ -15,6 +15,10 @@ function localDateString(date: Date, timezone: string): string {
   return formatter.format(date); // en-CA gives YYYY-MM-DD
 }
 
+// end_date is exclusive: a visit is current through the night before
+// end_date, and "visited" starting on end_date itself (the day Kara
+// leaves). This is what keeps back-to-back stays from both reading as
+// current on the changeover day.
 export function getVisitStatus(
   visit: Visit,
   timezone: string,
@@ -22,13 +26,57 @@ export function getVisitStatus(
 ): VisitStatus {
   const nowLocal = localDateString(now, timezone);
   if (nowLocal < visit.start_date) return "upcoming";
-  if (visit.end_date && nowLocal > visit.end_date) return "visited";
+  if (visit.end_date && nowLocal >= visit.end_date) return "visited";
   return "current";
 }
 
+// A single item in a chronological run of stays (e.g. one representative
+// visit per city on the current trip), classified against "now".
+export type StaySequenceItem<T> = { data: T; visit: Visit; status: VisitStatus };
+
+// Positions "current" and "upcoming" within a sorted sequence of stays,
+// rather than deriving them independently per item. "Upcoming" is
+// whichever stay comes right after the current one - not just any visit
+// whose start_date is in the future - so the arrow/route never skips a
+// city because an earlier boundary bug misclassified it. Day trips should
+// be excluded from `items` by the caller before calling this.
+export function getStaySequence<T>(
+  items: { data: T; visit: Visit; timezone: string }[],
+  now: Date = new Date()
+): {
+  current: StaySequenceItem<T> | null;
+  upcoming: StaySequenceItem<T> | null;
+  visited: StaySequenceItem<T>[];
+  future: StaySequenceItem<T>[];
+  sequence: StaySequenceItem<T>[];
+} {
+  const sequence: StaySequenceItem<T>[] = [...items]
+    .sort((a, b) => a.visit.start_date.localeCompare(b.visit.start_date))
+    .map((x) => ({
+      data: x.data,
+      visit: x.visit,
+      status: getVisitStatus(x.visit, x.timezone, now),
+    }));
+
+  const currentIndex = sequence.findIndex((x) => x.status === "current");
+  const current = currentIndex >= 0 ? sequence[currentIndex] : null;
+
+  const visited = current
+    ? sequence.slice(0, currentIndex)
+    : sequence.filter((x) => x.status === "visited");
+  const future = current
+    ? sequence.slice(currentIndex + 1)
+    : sequence.filter((x) => x.status === "upcoming");
+  const upcoming = future[0] ?? null;
+
+  return { current, upcoming, visited, future, sequence };
+}
+
 // A city can have multiple visits. The one badge/pin needs a single
-// representative visit: current first, else the most recent past visit,
-// else the nearest upcoming one.
+// representative visit: current first, else the most recent past visit
+// that was with Arina (if any - a later solo revisit shouldn't bury that
+// memory), else just the most recent past visit, else the nearest upcoming
+// one.
 export function pickRepresentativeVisit(
   visits: Visit[],
   timezone: string,
@@ -41,9 +89,12 @@ export function pickRepresentativeVisit(
   const current = withStatus.find((x) => x.status === "current");
   if (current) return current.v;
 
-  const past = withStatus
-    .filter((x) => x.status === "visited")
-    .sort((a, b) => (b.v.end_date ?? b.v.start_date).localeCompare(a.v.end_date ?? a.v.start_date));
+  const byMostRecent = (a: { v: Visit }, b: { v: Visit }) =>
+    (b.v.end_date ?? b.v.start_date).localeCompare(a.v.end_date ?? a.v.start_date);
+
+  const past = withStatus.filter((x) => x.status === "visited").sort(byMostRecent);
+  const partneredPast = past.filter((x) => x.v.visited_with_partner);
+  if (partneredPast.length > 0) return partneredPast[0].v;
   if (past.length > 0) return past[0].v;
 
   const upcoming = withStatus

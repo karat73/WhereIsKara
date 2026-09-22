@@ -32,7 +32,7 @@ export function SafeCheckInButton({ initialLastCheckedIn }: Props) {
       <button
         onClick={handleClick}
         disabled={state === "loading"}
-        className="w-full rounded-[2px] bg-accent hover:bg-accent-hover disabled:opacity-60 text-white font-medium text-[16px] py-3 transition-colors"
+        className="w-full rounded-[2px] bg-accent hover:bg-accent-hover active:bg-accent-hover disabled:opacity-60 text-white font-medium text-[16px] py-3 transition-colors"
       >
         {state === "done" ? "Checked in" : state === "loading" ? "Checking in…" : "I'm safe"}
       </button>

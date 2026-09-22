@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { formatDistanceToNowStrict } from "date-fns";
 import { MapView, type MapFilterMode } from "./MapView";
 import { CityPopup } from "./CityPopup";
+import { FilterToggle } from "./FilterToggle";
 import type { CityWithVisits, DailyUpdate, Trip } from "@/lib/types";
 
 const SIXTY_HOURS_MS = 60 * 60 * 60 * 1000;
@@ -27,8 +28,17 @@ export function MapExperience({ cities, latestUpdateByVisit, trip }: Props) {
   const checkedInValue = trip?.last_checked_in
     ? formatDistanceToNowStrict(new Date(trip.last_checked_in), { addSuffix: true })
     : null;
+
+  // Date.now() is impure, so it can't be called directly during render - a
+  // lazily-initialized "now" tracked in state (refreshed periodically via a
+  // callback, not synchronously in the effect body) stands in for it.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, []);
   const checkedInStale = trip?.last_checked_in
-    ? Date.now() - new Date(trip.last_checked_in).getTime() > SIXTY_HOURS_MS
+    ? now - new Date(trip.last_checked_in).getTime() > SIXTY_HOURS_MS
     : false;
 
   return (
@@ -41,27 +51,8 @@ export function MapExperience({ cities, latestUpdateByVisit, trip }: Props) {
         selectedCityId={selectedCityId}
       />
 
-      <div className="absolute left-4 top-[calc(3.5rem+0.75rem)] z-10 flex rounded-[2px] border border-line overflow-hidden bg-surface">
-        <button
-          onClick={() => setMode("sabbatical")}
-          className={`px-3 py-1.5 text-[13px] transition-colors ${
-            mode === "sabbatical"
-              ? "bg-accent text-white"
-              : "text-text-secondary hover:text-text-primary"
-          }`}
-        >
-          Sabbatical
-        </button>
-        <button
-          onClick={() => setMode("all-time")}
-          className={`px-3 py-1.5 text-[13px] transition-colors border-l border-line ${
-            mode === "all-time"
-              ? "bg-accent text-white"
-              : "text-text-secondary hover:text-text-primary"
-          }`}
-        >
-          All time
-        </button>
+      <div className="absolute left-4 top-[calc(3.5rem+0.75rem)] z-10">
+        <FilterToggle mode={mode} onChange={setMode} />
       </div>
 
       {checkedInValue && (

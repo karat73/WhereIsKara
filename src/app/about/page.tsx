@@ -87,6 +87,15 @@ export default async function AboutPage() {
         <h2 className="font-display text-[25px] mt-10 mb-3">Changelog</h2>
         <ul className="space-y-4 text-text-secondary leading-relaxed">
           <li>
+            <p className="text-text-primary font-medium">v1.2 &ndash; 22 September 2026</p>
+            <p>
+              Day trips added, Hanoi swapped in for the dropped China leg (sorry China), an added
+              Arina sprite, fixed a changeover day bug where two cities could show as current at
+              once, smoother popup scrolling and toggle animation on mobile, streamlined lines,
+              assorted fixes (timeline ordering, species pluralisation, improved colour contrast).
+            </p>
+          </li>
+          <li>
             <p className="text-text-primary font-medium">v1.1 &ndash; 10 August 2026</p>
             <p>
               Visits data model (repeat stays), historic trips mapped in, a Sabbatical/All-time
@@ -106,7 +115,7 @@ export default async function AboutPage() {
 
         <h2 className="font-display text-[25px] mt-10 mb-3">Still to come</h2>
         <ul className="space-y-2 text-text-secondary leading-relaxed list-disc pl-5">
-          <li>Pixel-Arina and Pixel-Kate.</li>
+          <li>More historic trips added</li>
           <li>A little wave animation before the map settles.</li>
         </ul>
 

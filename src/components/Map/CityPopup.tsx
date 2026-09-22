@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useCallback, useState } from "react";
 import { useLocalClock } from "@/hooks/useLocalClock";
 import { useCityWeather } from "@/hooks/useCityWeather";
 import { formatBadgeDate, formatCompactRange, formatRelativeTime } from "@/lib/format";
@@ -14,13 +15,28 @@ type Props = {
   onClose: () => void;
 };
 
+const CLOSE_ANIMATION_MS = 250;
+
 const badgeStyle: Record<VisitStatus, { bg: string; border: string; text: string }> = {
-  current: { bg: "var(--color-mustard)", border: "var(--color-mustard)", text: "#FFFFFF" },
+  current: {
+    bg: "var(--color-mustard)",
+    border: "var(--color-mustard)",
+    text: "#FFFFFF",
+  },
   visited: { bg: "transparent", border: "var(--color-stone)", text: "var(--color-ink)" },
   upcoming: { bg: "transparent", border: "var(--color-blue)", text: "var(--color-blue)" },
 };
 
 export function CityPopup({ city, latestUpdateByVisit, onClose }: Props) {
+  const [isClosing, setIsClosing] = useState(false);
+
+  const handleClose = useCallback(() => {
+    if (isClosing) return;
+    setIsClosing(true);
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    setTimeout(onClose, reduceMotion ? 0 : CLOSE_ANIMATION_MS);
+  }, [isClosing, onClose]);
+
   const now = new Date();
   const representativeVisit = pickRepresentativeVisit(city.visits, city.timezone, now);
   const visitStatus: VisitStatus = representativeVisit
@@ -33,6 +49,7 @@ export function CityPopup({ city, latestUpdateByVisit, onClose }: Props) {
 
   const latestUpdate = representativeVisit ? latestUpdateByVisit[representativeVisit.id] : null;
   const showUpdate = visitStatus !== "upcoming" && !!latestUpdate;
+  const withPartner = representativeVisit?.visited_with_partner ?? false;
 
   const metaParts = [city.country, tempC != null ? `${tempC}°C` : null, localTime || null].filter(
     Boolean
@@ -57,28 +74,31 @@ export function CityPopup({ city, latestUpdateByVisit, onClose }: Props) {
   const badge = badgeStyle[visitStatus];
 
   return (
-    <div
-      className="
-        fixed z-40 bg-surface overflow-y-auto
-        inset-x-0 bottom-0 h-[68vh] rounded-t-[14px] border-t-[3px]
-        pb-[env(safe-area-inset-bottom)]
-        sm:inset-x-auto sm:right-0 sm:top-14 sm:bottom-11 sm:h-auto
-        sm:w-[42%] sm:min-w-[380px] sm:max-w-[560px] sm:rounded-none
-        sm:border-t-0 sm:border-l-[3px]
-        animate-[slideIn_0.25s_ease-out]
-      "
-      style={{ borderColor: statusColor[pinStatus] }}
-    >
-      <div className="p-6 sm:p-8">
-        <div className="flex items-start justify-between gap-3">
+    <>
+      {/* Mobile only: the exposed map strip above the sheet. Sits below the
+          sheet's own z-index, so taps on the sheet itself never reach it -
+          only taps on the map above it do. */}
+      <div className="fixed inset-0 z-30 sm:hidden" onClick={handleClose} aria-hidden="true" />
+      <div
+        className={`
+          fixed z-40 bg-surface overflow-y-auto overscroll-contain
+          inset-x-0 bottom-0 max-h-[85dvh] rounded-t-[14px] border-t-[3px]
+          pb-[env(safe-area-inset-bottom)]
+          sm:inset-x-auto sm:right-0 sm:top-14 sm:bottom-11 sm:max-h-none sm:h-auto
+          sm:w-[42%] sm:min-w-[380px] sm:max-w-[560px] sm:rounded-none
+          sm:border-t-0 sm:border-l-[3px]
+          ${isClosing ? "animate-[slideOut_250ms_ease-in_forwards]" : "animate-[slideIn_250ms_ease-out]"}
+        `}
+        style={{ borderColor: statusColor[pinStatus] }}
+      >
+        <div className="sticky top-0 z-10 bg-surface flex items-start justify-between gap-3 px-6 pt-6 sm:px-8 sm:pt-8">
           <h2 className="font-display italic font-semibold text-[31px] text-text-primary">
             {city.name}
           </h2>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             aria-label="Close"
-            className="shrink-0 w-9 h-9 rounded-full border flex items-center justify-center transition-colors"
-            style={{ backgroundColor: "var(--color-card)", borderColor: "var(--color-line)" }}
+            className="shrink-0 w-9 h-9 rounded-full border border-[var(--color-line)] bg-[var(--color-card)] flex items-center justify-center transition-[background-color] duration-[80ms] ease-out active:translate-y-px active:bg-[var(--color-line)]"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path
@@ -91,6 +111,7 @@ export function CityPopup({ city, latestUpdateByVisit, onClose }: Props) {
           </button>
         </div>
 
+        <div className="px-6 pb-6 sm:px-8 sm:pb-8">
         {representativeVisit && (
           <span
             className="font-mono-num inline-block mt-3 text-[13px] font-medium uppercase rounded-[2px] px-3 py-1 border"
@@ -142,8 +163,35 @@ export function CityPopup({ city, latestUpdateByVisit, onClose }: Props) {
             </div>
           )}
           <div className="absolute inset-x-0 bottom-0 h-[80%] flex justify-center items-end pointer-events-none">
-            <div className="relative h-full aspect-square">
-              <Image src="/kara/kara-overlay.png" alt="" fill className="object-contain" />
+            {/* Positioned as a pair when visited with Arina, not a fixed
+                slot plus a toggle: two sprites are narrower each so the
+                centred group fits, and slightly overlap (Kara drawn last,
+                so she's in front) rather than just sitting side by side. */}
+            {withPartner && (
+              <div
+                className="relative h-full w-[45%] -mr-8"
+                style={{ imageRendering: "pixelated" }}
+              >
+                <Image
+                  src="/kara/arina-overlay.png"
+                  alt=""
+                  fill
+                  className="object-contain object-bottom"
+                  unoptimized
+                />
+              </div>
+            )}
+            <div
+              className={`relative h-full ${withPartner ? "w-[45%]" : "aspect-square"}`}
+              style={{ imageRendering: "pixelated" }}
+            >
+              <Image
+                src="/kara/kara-overlay.png"
+                alt=""
+                fill
+                className="object-contain object-bottom"
+                unoptimized
+              />
             </div>
           </div>
         </div>
@@ -167,7 +215,8 @@ export function CityPopup({ city, latestUpdateByVisit, onClose }: Props) {
             </Link>
           </div>
         )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

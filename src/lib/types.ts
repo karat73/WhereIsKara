@@ -23,6 +23,9 @@ export type Visit = {
   start_date: string;
   end_date: string | null;
   created_at: string;
+  is_day_trip: boolean;
+  parent_visit_id: string | null;
+  visited_with_partner: boolean;
 };
 
 export type CityWithVisits = City & { visits: Visit[] };

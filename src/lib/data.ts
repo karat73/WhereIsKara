@@ -22,7 +22,12 @@ export async function getVisits(): Promise<Visit[]> {
     .select("*")
     .order("start_date", { ascending: true });
   if (error) throw error;
-  return (data ?? []).map((row) => ({ ...row, id: String(row.id), city_id: String(row.city_id) }));
+  return (data ?? []).map((row) => ({
+    ...row,
+    id: String(row.id),
+    city_id: String(row.city_id),
+    parent_visit_id: row.parent_visit_id != null ? String(row.parent_visit_id) : null,
+  }));
 }
 
 export async function getCitiesWithVisits(): Promise<CityWithVisits[]> {

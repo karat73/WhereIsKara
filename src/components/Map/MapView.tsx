@@ -6,7 +6,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import type { CityWithVisits, PinStatus, Trip } from "@/lib/types";
 import {
   getPinStatus,
-  getVisitStatus,
+  getStaySequence,
   isWithinTrip,
   pickRepresentativeVisit,
   statusColor,
@@ -55,29 +55,50 @@ export function MapView({ cities, trip, mode, onSelectCity, selectedCityId }: Pr
     const now = new Date();
     const tripCities = cities.filter((c) => c.pin_type === "trip");
 
-    const withRepVisit = tripCities.map((city) => ({
-      city,
-      visit: pickRepresentativeVisit(
-        city.visits.filter((v) => isWithinTrip(v, trip)),
-        city.timezone,
-        now
-      ),
-    }));
+    // Day trips never determine where Kara "is" - they're excluded from
+    // the route/arrow sequence entirely (a day-trip-only city like Ha Long
+    // Bay just won't have a representative visit here and drops out).
+    const withRepVisit = tripCities
+      .map((city) => ({
+        city,
+        visit: pickRepresentativeVisit(
+          city.visits.filter((v) => isWithinTrip(v, trip) && !v.is_day_trip),
+          city.timezone,
+          now
+        ),
+      }))
+      .filter(
+        (x): x is { city: (typeof tripCities)[number]; visit: NonNullable<typeof x.visit> } =>
+          x.visit !== null
+      );
 
-    const currentEntry = withRepVisit.find(
-      (x) => x.visit && getVisitStatus(x.visit, x.city.timezone, now) === "current"
+    // Current/upcoming are derived positionally from the sorted sequence of
+    // stays, not independently per city - this is what keeps the route and
+    // arrow correct on a changeover day (one stay ending exactly when the
+    // next begins).
+    const { current, visited, future } = getStaySequence(
+      withRepVisit.map((x) => ({ data: x.city, visit: x.visit, timezone: x.city.timezone })),
+      now
     );
 
-    const traveled = withRepVisit
-      .filter((x) => x.visit && getVisitStatus(x.visit, x.city.timezone, now) !== "upcoming")
-      .sort((a, b) => a.visit!.start_date.localeCompare(b.visit!.start_date))
-      .map((x) => x.city);
+    const traveled = [...visited, ...(current ? [current] : [])].map((x) => x.data);
+    const upcomingPath = [...(current ? [current] : []), ...future].map((x) => x.data);
+    const currentEntry = current ? { city: current.data } : null;
 
-    const allUpcoming = withRepVisit
-      .filter((x) => x.visit && getVisitStatus(x.visit, x.city.timezone, now) === "upcoming")
-      .sort((a, b) => a.visit!.start_date.localeCompare(b.visit!.start_date))
-      .map((x) => x.city);
-    const upcomingPath = currentEntry ? [currentEntry.city, ...allUpcoming] : allUpcoming;
+    // Static spur lines from each day trip's parent stay to the day trip's
+    // own city, e.g. Hanoi -> Ha Long Bay. Computed once from all cities
+    // (not just tripCities) since a day-trip city's only visit is the day
+    // trip itself, so it never appears in withRepVisit above.
+    const daytripSpurs: { from: [number, number]; to: [number, number] }[] = [];
+    for (const city of cities) {
+      for (const visit of city.visits) {
+        if (!visit.is_day_trip || !visit.parent_visit_id) continue;
+        const parentCity = cities.find((c) => c.visits.some((v) => v.id === visit.parent_visit_id));
+        if (parentCity) {
+          daytripSpurs.push({ from: [parentCity.lng, parentCity.lat], to: [city.lng, city.lat] });
+        }
+      }
+    }
 
     map.on("load", () => {
       map.addSource("route-traveled", {
@@ -98,12 +119,24 @@ export function MapView({ cities, trip, mode, onSelectCity, selectedCityId }: Pr
         },
       });
 
+      // One feature per leg (not one feature for the whole path) so
+      // "line-center" symbol placement puts exactly one arrow per leg,
+      // instead of every 250px along the entire multi-stop path.
       map.addSource("route-upcoming", {
         type: "geojson",
         data: {
-          type: "Feature",
-          properties: {},
-          geometry: { type: "LineString", coordinates: upcomingPath.map((c) => [c.lng, c.lat]) },
+          type: "FeatureCollection",
+          features: upcomingPath.slice(0, -1).map((c, i) => ({
+            type: "Feature",
+            properties: {},
+            geometry: {
+              type: "LineString",
+              coordinates: [
+                [c.lng, c.lat],
+                [upcomingPath[i + 1].lng, upcomingPath[i + 1].lat],
+              ],
+            },
+          })),
         },
       });
       map.addLayer({
@@ -141,8 +174,44 @@ export function MapView({ cities, trip, mode, onSelectCity, selectedCityId }: Pr
         type: "symbol",
         source: "route-upcoming",
         layout: {
-          "symbol-placement": "line",
-          "symbol-spacing": 60,
+          "symbol-placement": "line-center",
+          "icon-image": "route-arrow",
+          "icon-size": 1.4,
+          "icon-rotation-alignment": "map",
+          "icon-allow-overlap": true,
+          "icon-ignore-placement": true,
+        },
+      });
+
+      // Styled the same as the upcoming route (blue, dashed, arrowed) since
+      // it's a one-way "out from the parent stay" line, not a there-and-back.
+      map.addSource("day-trip-spurs", {
+        type: "geojson",
+        data: {
+          type: "FeatureCollection",
+          features: daytripSpurs.map((s) => ({
+            type: "Feature",
+            properties: {},
+            geometry: { type: "LineString", coordinates: [s.from, s.to] },
+          })),
+        },
+      });
+      map.addLayer({
+        id: "day-trip-spurs",
+        type: "line",
+        source: "day-trip-spurs",
+        paint: {
+          "line-color": "#2C4A7C",
+          "line-width": 1.75,
+          "line-dasharray": [0, 4, 3],
+        },
+      });
+      map.addLayer({
+        id: "day-trip-spur-arrows",
+        type: "symbol",
+        source: "day-trip-spurs",
+        layout: {
+          "symbol-placement": "line-center",
           "icon-image": "route-arrow",
           "icon-size": 1.4,
           "icon-rotation-alignment": "map",
@@ -187,6 +256,7 @@ export function MapView({ cities, trip, mode, onSelectCity, selectedCityId }: Pr
     // representative visit (which may be historic).
     const visibleCities = cities.filter((city) => {
       if (city.pin_type === "personal") return true;
+      if (city.visits.length === 0) return false;
       if (mode === "all-time") return true;
       return city.visits.some((v) => isWithinTrip(v, trip));
     });
@@ -211,6 +281,11 @@ export function MapView({ cities, trip, mode, onSelectCity, selectedCityId }: Pr
       const marker = new mapboxgl.Marker({ element: el, anchor: "bottom" })
         .setLngLat([city.lng, city.lat])
         .addTo(map);
+
+      // The current city should always read as "here I am" even when
+      // another pin overlaps it, regardless of which was added to the map
+      // first.
+      marker.getElement().style.zIndex = status === "current" ? "10" : "1";
 
       markersRef.current[city.id] = marker;
     });
