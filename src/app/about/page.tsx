@@ -75,8 +75,8 @@ export default async function AboutPage() {
           <li>Mapbox &gt; OpenStreetMap due to the ease of styling.</li>
           <li>
             The early plan included blog entries and photo uploads but once sketched out felt
-            v 2009. One-line status updates are used instead, kind like IG stories without using
-            a Meta product. Aiming for this site to be a live pin board, not a blog.
+            v 2009. One-line status updates are used instead, kind of like IG stories without
+            using a Meta product. Aiming for this site to be a live pin board, not a blog.
           </li>
           <li>
             The timeline is there to collate daily updates and will be expanded on in later
@@ -131,6 +131,26 @@ export default async function AboutPage() {
             className="text-accent hover:text-accent-hover underline"
           >
             feedback@whereiskara.com
+          </a>
+        </p>
+
+        <p className="mt-2 text-sm text-text-muted">
+          <a
+            href="https://github.com/karat73/WhereIsKara"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-accent hover:text-accent-hover underline"
+          >
+            GitHub
+          </a>
+          {" · "}
+          <a
+            href="https://www.linkedin.com/in/karatravadi/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-accent hover:text-accent-hover underline"
+          >
+            LinkedIn
           </a>
         </p>
       </article>
