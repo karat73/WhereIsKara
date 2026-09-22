@@ -1,11 +1,21 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import nextDynamic from "next/dynamic";
 import { formatDistanceToNowStrict } from "date-fns";
-import { MapView, type MapFilterMode } from "./MapView";
+import type { MapFilterMode } from "./MapView";
 import { CityPopup } from "./CityPopup";
 import { FilterToggle } from "./FilterToggle";
 import type { CityWithVisits, DailyUpdate, Trip } from "@/lib/types";
+
+// mapbox-gl is large (JS and its own CSS) and only ever runs in the
+// browser - loading it eagerly blocked first paint on every page load,
+// whether or not the map had rendered yet. Splitting it into its own
+// chunk keeps it off the critical path entirely.
+const MapView = nextDynamic(() => import("./MapView").then((mod) => mod.MapView), {
+  ssr: false,
+  loading: () => <div className="absolute inset-0 bg-bg" />,
+});
 
 const SIXTY_HOURS_MS = 60 * 60 * 60 * 1000;
 
