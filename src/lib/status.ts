@@ -74,9 +74,9 @@ export function getStaySequence<T>(
 
 // A city can have multiple visits. The one badge/pin needs a single
 // representative visit: current first, else the most recent past visit
-// that was with Arina (if any - a later solo revisit shouldn't bury that
-// memory), else just the most recent past visit, else the nearest upcoming
-// one.
+// that was with a partner (if any - a later solo revisit shouldn't bury
+// that memory), else just the most recent past visit, else the nearest
+// upcoming one.
 export function pickRepresentativeVisit(
   visits: Visit[],
   timezone: string,

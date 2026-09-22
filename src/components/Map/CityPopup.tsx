@@ -163,10 +163,11 @@ export function CityPopup({ city, latestUpdateByVisit, onClose }: Props) {
             </div>
           )}
           <div className="absolute inset-x-0 bottom-0 h-[80%] flex justify-center items-end pointer-events-none">
-            {/* Positioned as a pair when visited with Arina, not a fixed
-                slot plus a toggle: two sprites are narrower each so the
-                centred group fits, and slightly overlap (Kara drawn last,
-                so she's in front) rather than just sitting side by side. */}
+            {/* Positioned as a pair when visited with a partner, not a
+                fixed slot plus a toggle: two sprites are narrower each so
+                the centred group fits, and slightly overlap (Kara drawn
+                last, so she's in front) rather than just sitting side by
+                side. */}
             {withPartner && (
               <div
                 className="relative h-full w-[45%] -mr-8"
