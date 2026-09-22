@@ -3,29 +3,45 @@ const MONTHS = [
   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
 ];
 
-// Badge date, e.g. "25 JUL – 31 JUL 2026" (same year) or
-// "25 JUL 2026 – 31 JAN 2027" (crossing years). Plex Mono, uppercase.
-export function formatBadgeDate(startISO: string, endISO: string | null) {
-  const a = new Date(startISO);
-  const d = endISO ? new Date(endISO) : a;
-  const sameYear = a.getUTCFullYear() === d.getUTCFullYear();
+// end_date is exclusive (the day Kara leaves), so the last day actually
+// shown is one day before it. A visit whose window is a single day (e.g.
+// a day trip: start 29 Sep, end 30 Sep) collapses to just that one date.
+function lastInclusiveDay(startISO: string, endISOExclusive: string | null): Date {
+  const start = new Date(startISO);
+  if (!endISOExclusive) return start;
+  const last = new Date(new Date(endISOExclusive).getTime() - 24 * 60 * 60 * 1000);
+  return last.getTime() > start.getTime() ? last : start;
+}
 
+// Badge date, e.g. "25 JUL – 30 JUL 2026" (same year) or
+// "25 JUL 2026 – 31 JAN 2027" (crossing years), or just "29 SEP 2026" for
+// a single-day visit. Plex Mono, uppercase.
+export function formatBadgeDate(startISO: string, endISOExclusive: string | null) {
+  const a = new Date(startISO);
+  const d = lastInclusiveDay(startISO, endISOExclusive);
+
+  if (d.getTime() === a.getTime()) {
+    return `${a.getUTCDate()} ${MONTHS[a.getUTCMonth()].toUpperCase()} ${a.getUTCFullYear()}`;
+  }
+
+  const sameYear = a.getUTCFullYear() === d.getUTCFullYear();
   const startPart = sameYear
     ? `${a.getUTCDate()} ${MONTHS[a.getUTCMonth()].toUpperCase()}`
     : `${a.getUTCDate()} ${MONTHS[a.getUTCMonth()].toUpperCase()} ${a.getUTCFullYear()}`;
   const endPart = `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()].toUpperCase()} ${d.getUTCFullYear()}`;
 
-  if (!endISO) return startPart;
   return `${startPart} – ${endPart}`;
 }
 
 // Compact range for the "Also here" / "Back here" line, e.g.
-// "12–18 Jan 2027" (same month) or "28 Dec 2026 – 3 Jan 2027" (crossing).
-export function formatCompactRange(startISO: string, endISO: string | null) {
+// "12–17 Jan 2027" (same month) or "28 Dec 2026 – 2 Jan 2027" (crossing).
+export function formatCompactRange(startISO: string, endISOExclusive: string | null) {
   const a = new Date(startISO);
-  const d = endISO ? new Date(endISO) : a;
+  const d = lastInclusiveDay(startISO, endISOExclusive);
 
-  if (!endISO) return `${a.getUTCDate()} ${MONTHS[a.getUTCMonth()]} ${a.getUTCFullYear()}`;
+  if (d.getTime() === a.getTime()) {
+    return `${a.getUTCDate()} ${MONTHS[a.getUTCMonth()]} ${a.getUTCFullYear()}`;
+  }
 
   const sameMonthYear =
     a.getUTCMonth() === d.getUTCMonth() && a.getUTCFullYear() === d.getUTCFullYear();

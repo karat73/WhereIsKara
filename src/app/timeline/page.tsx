@@ -50,7 +50,13 @@ export default async function TimelinePage() {
 
             const ordinal = visitOrdinalById[visit.id];
             const showStayTag = city.visits.length > 1 && ordinal > 1;
-            const dayNumber = trip ? tripDayNumber(trip.start_date, update.date) : null;
+            // created_at is when the update was first posted and never
+            // changes on edit - date is a legacy field, no longer used for
+            // display, so an old entry can't move or re-date itself.
+            const dayNumber = trip ? tripDayNumber(trip.start_date, update.created_at) : null;
+            // Day trips list in date order alongside stays rather than
+            // nesting under their parent - simpler, spec allows it as the
+            // fallback - but get a small tag so they still read distinctly.
 
             return (
               <li key={update.id} className="py-6">
@@ -58,9 +64,11 @@ export default async function TimelinePage() {
                   <div className="flex items-baseline justify-between gap-3">
                     <p className="tabular-nums">
                       <span className="text-[20px] font-semibold text-text-primary">
-                        {formatDayMonth(update.date)}
+                        {formatDayMonth(update.created_at)}
                       </span>{" "}
-                      <span className="text-[16px] text-text-secondary">{formatYear(update.date)}</span>
+                      <span className="text-[16px] text-text-secondary">
+                        {formatYear(update.created_at)}
+                      </span>
                     </p>
                     {dayNumber != null && (
                       <span className="font-mono-num shrink-0 text-[13px] uppercase border rounded-[2px] px-2 py-0.5 text-blue border-blue">
@@ -74,6 +82,11 @@ export default async function TimelinePage() {
                     {showStayTag && (
                       <span className="not-italic font-sans text-[11px] uppercase text-blue">
                         {ordinalStayLabel(ordinal)}
+                      </span>
+                    )}
+                    {visit.is_day_trip && (
+                      <span className="not-italic font-sans text-[11px] uppercase text-text-muted">
+                        Day trip
                       </span>
                     )}
                   </p>

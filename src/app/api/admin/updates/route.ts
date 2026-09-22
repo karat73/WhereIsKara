@@ -63,11 +63,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: selectError.message }, { status: 500 });
   }
 
+  // Editing only ever changes the caption text - never date or created_at,
+  // so correcting an old entry can't move it in the timeline or change its
+  // displayed date (that's what "created_at" is for: when it was first
+  // posted, never touched again).
   const { error } = existing
-    ? await supabaseAdmin
-        .from("daily_updates")
-        .update({ caption: caption.trim(), date: todayDate, created_at: now.toISOString() })
-        .eq("id", existing.id)
+    ? await supabaseAdmin.from("daily_updates").update({ caption: caption.trim() }).eq("id", existing.id)
     : await supabaseAdmin.from("daily_updates").insert({
         visit_id: visit.id,
         date: todayDate,

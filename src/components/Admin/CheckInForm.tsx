@@ -79,7 +79,7 @@ export function CheckInForm({ cities, captionsByCity }: Props) {
       <button
         type="submit"
         disabled={status === "loading" || !caption.trim() || !cityId}
-        className="rounded-[2px] bg-accent hover:bg-accent-hover disabled:opacity-50 text-white font-medium px-5 py-2.5 transition-colors"
+        className="rounded-[2px] bg-accent hover:bg-accent-hover active:bg-accent-hover disabled:opacity-50 text-white font-medium px-5 py-2.5 transition-colors"
       >
         {status === "loading" ? "Saving…" : "Save update"}
       </button>

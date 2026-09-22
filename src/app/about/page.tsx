@@ -75,8 +75,8 @@ export default async function AboutPage() {
           <li>Mapbox &gt; OpenStreetMap due to the ease of styling.</li>
           <li>
             The early plan included blog entries and photo uploads but once sketched out felt
-            v 2009. Check-ins do the work instead, kind of like IG stories without using a
-            Meta product. Aiming for this site to be a live pin board, not a blog.
+            v 2009. One-line status updates are used instead, kind of like IG stories without
+            using a Meta product. Aiming for this site to be a live pin board, not a blog.
           </li>
           <li>
             The timeline is there to collate daily updates and will be expanded on in later
@@ -86,6 +86,15 @@ export default async function AboutPage() {
 
         <h2 className="font-display text-[25px] mt-10 mb-3">Changelog</h2>
         <ul className="space-y-4 text-text-secondary leading-relaxed">
+          <li>
+            <p className="text-text-primary font-medium">v1.2 &ndash; 22 September 2026</p>
+            <p>
+              Day trips added, Hanoi swapped in for the dropped China leg (sorry China), added an
+              Arina sprite, fixed a changeover day bug where two cities could show as current at
+              once, smoother popup scrolling and toggle animation, streamlined lines, assorted
+              fixes (timeline ordering, species pluralisation, improved colour contrast).
+            </p>
+          </li>
           <li>
             <p className="text-text-primary font-medium">v1.1 &ndash; 10 August 2026</p>
             <p>
@@ -106,7 +115,7 @@ export default async function AboutPage() {
 
         <h2 className="font-display text-[25px] mt-10 mb-3">Still to come</h2>
         <ul className="space-y-2 text-text-secondary leading-relaxed list-disc pl-5">
-          <li>Pixel-Arina and Pixel-Kate.</li>
+          <li>More historic trips added.</li>
           <li>A little wave animation before the map settles.</li>
         </ul>
 
@@ -122,6 +131,26 @@ export default async function AboutPage() {
             className="text-accent hover:text-accent-hover underline"
           >
             feedback@whereiskara.com
+          </a>
+        </p>
+
+        <p className="mt-2 text-sm text-text-muted">
+          <a
+            href="https://github.com/karat73/WhereIsKara"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-accent hover:text-accent-hover underline"
+          >
+            GitHub
+          </a>
+          {" · "}
+          <a
+            href="https://www.linkedin.com/in/karatravadi/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-accent hover:text-accent-hover underline"
+          >
+            LinkedIn
           </a>
         </p>
       </article>

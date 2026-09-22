@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { TouchActiveEnabler } from "@/components/TouchActiveEnabler";
 
 const plexSans = IBM_Plex_Sans({
   variable: "--font-plex-sans",
@@ -35,6 +36,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${plexSans.variable} ${plexMono.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-bg text-text-primary">
+        <TouchActiveEnabler />
         <Header />
         <main className="flex-1 min-h-0">{children}</main>
         <Footer />

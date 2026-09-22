@@ -7,18 +7,17 @@ export function useCityWeather(lat: number, lng: number) {
 
   useEffect(() => {
     let cancelled = false;
-    setTempC(null);
 
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m`;
     fetch(url)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (!cancelled && data?.current?.temperature_2m != null) {
-          setTempC(Math.round(data.current.temperature_2m));
+        if (!cancelled) {
+          setTempC(data?.current?.temperature_2m != null ? Math.round(data.current.temperature_2m) : null);
         }
       })
       .catch(() => {
-        /* silently fall back to no temperature */
+        if (!cancelled) setTempC(null);
       });
 
     return () => {
