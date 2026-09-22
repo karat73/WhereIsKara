@@ -1,7 +1,14 @@
 {
   "name": "wheres-kara",
-  "version": "0.1.0",
+  "version": "1.2.0",
+  "description": "A live pin board tracking a 6-month sabbatical, built with Next.js, Supabase and Mapbox.",
   "private": true,
+  "license": "MIT",
+  "author": "Kara <https://github.com/karat73>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/karat73/WhereIsKara.git"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",

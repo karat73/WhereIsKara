@@ -2,6 +2,8 @@
 
 A live pin board tracking a 6-month sabbatical. **[whereiskara.com](https://whereiskara.com)**
 
+![Screenshot of the map](docs/screenshot.png)
+
 ## What this is
 
 Medium term: A single place for friends, family and well-wishers to see where I am during a 6 month sabbatical.
@@ -10,10 +12,10 @@ headed next.
 
 ## Key features
 
-- **Live status, derived not stored.** Whether a city is current,
-  upcoming, or already visited is computed from its dates every time
-  the page loads, in that city's own timezone. Nothing is manually
-  flipped when Kara moves on to a new place.
+- **Live status.** Whether a city is current, upcoming, or already
+  visited is computed from its dates every time the page loads, in
+  that city's own timezone. Nothing is manually flipped when Kara
+  moves on to a new place.
 - **Repeat visits.** A city can have more than one stay (e.g. Hanoi in
   July and again in September); the map picks whichever one is most
   relevant to show.
@@ -68,15 +70,12 @@ cd WhereIsKara
 npm install
 ```
 
-Add a `.env.local` in the project root:
+Copy `.env.example` to `.env.local` and fill in Supabase and Mapbox
+credentials (the last four vars are optional, only needed for the
+map-usage alert emails and an external check-in trigger):
 
-```
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
-NEXT_PUBLIC_MAPBOX_TOKEN=
-ADMIN_PASSWORD=
-ADMIN_SESSION_SECRET=
+```bash
+cp .env.example .env.local
 ```
 
 Then:
@@ -87,10 +86,12 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-`RESEND_API_KEY`, `ALERT_EMAIL_TO`, `CRON_SECRET` and `CHECKIN_SECRET`
-are optional, only needed for the map-usage alert emails and an
-external check-in trigger.
+## What's not done yet
+
+- No automated tests.
+- No accessibility audit yet.
 
 ## License
 
-MIT, see [LICENSE](LICENSE).
+MIT for the code, see [LICENSE](LICENSE), it doesn't cover the photos
+or sprite art.
