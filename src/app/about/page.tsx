@@ -75,8 +75,8 @@ export default async function AboutPage() {
           <li>Mapbox &gt; OpenStreetMap due to the ease of styling.</li>
           <li>
             The early plan included blog entries and photo uploads but once sketched out felt
-            v 2009. Check-ins do the work instead, kind of like IG stories without using a
-            Meta product. Aiming for this site to be a live pin board, not a blog.
+            v 2009. One-line status updates are used instead, kind like IG stories without using
+            a Meta product. Aiming for this site to be a live pin board, not a blog.
           </li>
           <li>
             The timeline is there to collate daily updates and will be expanded on in later
@@ -89,10 +89,10 @@ export default async function AboutPage() {
           <li>
             <p className="text-text-primary font-medium">v1.2 &ndash; 22 September 2026</p>
             <p>
-              Day trips added, Hanoi swapped in for the dropped China leg (sorry China), an added
+              Day trips added, Hanoi swapped in for the dropped China leg (sorry China), added an
               Arina sprite, fixed a changeover day bug where two cities could show as current at
-              once, smoother popup scrolling and toggle animation on mobile, streamlined lines,
-              assorted fixes (timeline ordering, species pluralisation, improved colour contrast).
+              once, smoother popup scrolling and toggle animation, streamlined lines, assorted
+              fixes (timeline ordering, species pluralisation, improved colour contrast).
             </p>
           </li>
           <li>
@@ -115,7 +115,7 @@ export default async function AboutPage() {
 
         <h2 className="font-display text-[25px] mt-10 mb-3">Still to come</h2>
         <ul className="space-y-2 text-text-secondary leading-relaxed list-disc pl-5">
-          <li>More historic trips added</li>
+          <li>More historic trips added.</li>
           <li>A little wave animation before the map settles.</li>
         </ul>
 
