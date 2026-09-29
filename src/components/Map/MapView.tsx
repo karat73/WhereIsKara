@@ -5,7 +5,8 @@ import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import type { CityWithVisits, PinStatus, Trip } from "@/lib/types";
 import {
-  getPinStatus,
+  getArbitratedPinStatus,
+  getCanonicalCurrentTrip,
   getStaySequence,
   isWithinTrip,
   pickRepresentativeVisit,
@@ -14,6 +15,23 @@ import {
 import { pinSvg } from "@/lib/pinIcon";
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
+
+// On the globe projection, Mapbox visually curves a rendered line to
+// follow the sphere, but a bare 2-point LineString gives it nothing to
+// curve - the line bows on screen while "line-center" symbol placement
+// still anchors to the midpoint of the original straight (now-inaccurate)
+// chord, so the arrow sits visibly off the curved line it's meant to sit
+// on. Subdividing into many short segments first means there's no gap
+// between the geometry the line layer draws and the geometry the arrow
+// is placed against.
+function subdivideLine(from: [number, number], to: [number, number], steps = 32): [number, number][] {
+  const points: [number, number][] = [];
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    points.push([from[0] + (to[0] - from[0]) * t, from[1] + (to[1] - from[1]) * t]);
+  }
+  return points;
+}
 
 export type MapFilterMode = "travels" | "all-time";
 
@@ -131,10 +149,10 @@ export function MapView({ cities, trip, mode, onSelectCity, selectedCityId }: Pr
             properties: {},
             geometry: {
               type: "LineString",
-              coordinates: [
+              coordinates: subdivideLine(
                 [c.lng, c.lat],
-                [upcomingPath[i + 1].lng, upcomingPath[i + 1].lat],
-              ],
+                [upcomingPath[i + 1].lng, upcomingPath[i + 1].lat]
+              ),
             },
           })),
         },
@@ -192,7 +210,7 @@ export function MapView({ cities, trip, mode, onSelectCity, selectedCityId }: Pr
           features: daytripSpurs.map((s) => ({
             type: "Feature",
             properties: {},
-            geometry: { type: "LineString", coordinates: [s.from, s.to] },
+            geometry: { type: "LineString", coordinates: subdivideLine(s.from, s.to) },
           })),
         },
       });
@@ -261,13 +279,20 @@ export function MapView({ cities, trip, mode, onSelectCity, selectedCityId }: Pr
       return city.visits.some((v) => isWithinTrip(v, trip));
     });
 
+    // Guards against two cities in different timezones both reading
+    // "current" during the changeover window between them - see
+    // getCanonicalCurrentTrip's own comment for why this is necessary
+    // rather than each city just checking its own timezone.
+    const canonicalCurrent = getCanonicalCurrentTrip(cities, trip, now);
+
     visibleCities.forEach((city) => {
       const visitsForStatus =
         mode === "travels" && city.pin_type !== "personal"
           ? city.visits.filter((v) => isWithinTrip(v, trip))
           : city.visits;
       const representativeVisit = pickRepresentativeVisit(visitsForStatus, city.timezone, now);
-      const status: PinStatus = getPinStatus(city, representativeVisit, now);
+      const status: PinStatus = getArbitratedPinStatus(city, representativeVisit, canonicalCurrent, now);
+
       const el = document.createElement("div");
       el.className = "kara-pin";
       el.innerHTML = pinSvg(status, statusColor[status]);

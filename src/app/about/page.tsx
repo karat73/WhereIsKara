@@ -1,5 +1,10 @@
 import { getAllDailyUpdates, getCitiesWithVisits, getTrip } from "@/lib/data";
-import { getVisitStatus, pickRepresentativeVisit, tripDay } from "@/lib/status";
+import {
+  getArbitratedPinStatus,
+  getCanonicalCurrentTrip,
+  pickRepresentativeVisit,
+  tripDay,
+} from "@/lib/status";
 import { haversineMiles } from "@/lib/geo";
 import { countryToContinent } from "@/lib/continents";
 import { TripStats } from "@/components/About/TripStats";
@@ -14,10 +19,17 @@ export default async function AboutPage() {
   ]);
 
   const now = new Date();
+  // Arbitrated against the canonical current city (see getCanonicalCurrentTrip)
+  // rather than each city's own timezone independently, so a city can't get
+  // counted as "traveled" an hour early during a changeover between two
+  // cities in different timezones.
+  const canonicalCurrent = getCanonicalCurrentTrip(cities, trip, now);
   const traveledCities = cities
     .filter((c) => c.pin_type === "trip")
     .map((c) => ({ city: c, visit: pickRepresentativeVisit(c.visits, c.timezone, now) }))
-    .filter((x) => x.visit && getVisitStatus(x.visit, x.city.timezone, now) !== "upcoming")
+    .filter(
+      (x) => x.visit && getArbitratedPinStatus(x.city, x.visit, canonicalCurrent, now) !== "upcoming"
+    )
     .sort((a, b) => a.visit!.start_date.localeCompare(b.visit!.start_date))
     .map((x) => x.city);
 

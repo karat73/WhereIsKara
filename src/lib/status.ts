@@ -1,4 +1,4 @@
-import type { City, PinStatus, Trip, Visit, VisitStatus } from "./types";
+import type { City, CityWithVisits, PinStatus, Trip, Visit, VisitStatus } from "./types";
 
 // visit.start_date/end_date are plain local calendar dates for the city
 // they belong to (e.g. "2026-08-10"), not UTC instants. Comparing them
@@ -122,6 +122,68 @@ export function getPinStatus(
   if (city.pin_type === "personal") return "personal";
   if (!representativeVisit) return "upcoming";
   return getVisitStatus(representativeVisit, city.timezone, now);
+}
+
+// Every city's current/upcoming/visited status is normally computed
+// independently, comparing "now" against that city's own timezone. That's
+// right almost all the time, but right at a changeover between two cities
+// in different timezones there's a real window - as wide as the gap
+// between their UTC offsets - where both cities' local calendars have
+// independently ticked over to "current" at once. This has surfaced more
+// than once as two cities (or a pin and its own popup) disagreeing about
+// which one is current.
+//
+// getStaySequence already avoids this for the route line by deriving
+// current positionally across ALL trip cities at once, rather than
+// per-city. This computes that same positional answer as a single
+// portable descriptor (which city, and its visit's start_date) so every
+// other place that needs to know "is this city current" - map pins, a
+// city's own popup, the trip stats - can check against it instead of
+// running its own independent, unarbitrated comparison.
+export function getCanonicalCurrentTrip(
+  cities: CityWithVisits[],
+  trip: Trip | null,
+  now: Date = new Date()
+): { cityId: string; startDate: string } | null {
+  const tripCities = cities.filter((c) => c.pin_type === "trip");
+  const withRepVisit = tripCities
+    .map((city) => ({
+      city,
+      visit: pickRepresentativeVisit(
+        city.visits.filter((v) => isWithinTrip(v, trip) && !v.is_day_trip),
+        city.timezone,
+        now
+      ),
+    }))
+    .filter((x): x is { city: CityWithVisits; visit: Visit } => x.visit !== null);
+
+  const { current } = getStaySequence(
+    withRepVisit.map((x) => ({ data: x.city, visit: x.visit, timezone: x.city.timezone })),
+    now
+  );
+
+  return current ? { cityId: current.data.id, startDate: current.visit.start_date } : null;
+}
+
+// Wraps getPinStatus with the canonical-current arbitration above: if this
+// city's own timezone says "current" but it isn't the canonically current
+// one, it's downgraded to visited or upcoming depending on which side of
+// the canonical current visit it falls on. Every other status (visited,
+// upcoming, personal) passes through unchanged - the ambiguity only ever
+// arises for "current".
+export function getArbitratedPinStatus(
+  city: City,
+  representativeVisit: Visit | null,
+  canonicalCurrent: { cityId: string; startDate: string } | null,
+  now: Date = new Date()
+): PinStatus {
+  const status = getPinStatus(city, representativeVisit, now);
+  if (status !== "current" || !canonicalCurrent || city.id === canonicalCurrent.cityId) {
+    return status;
+  }
+  return representativeVisit && representativeVisit.start_date < canonicalCurrent.startDate
+    ? "visited"
+    : "upcoming";
 }
 
 // A visit "belongs to" the 26/27 travels if it starts within the trip's

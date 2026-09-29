@@ -81,6 +81,8 @@ export function MapExperience({ cities, latestUpdateByVisit, trip }: Props) {
       {selectedCity && (
         <CityPopup
           city={selectedCity}
+          cities={cities}
+          trip={trip}
           latestUpdateByVisit={latestUpdateByVisit}
           onClose={() => setSelectedCityId(null)}
         />
