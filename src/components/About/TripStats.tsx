@@ -34,7 +34,7 @@ export function TripStats({
     <div className="mb-10 space-y-8">
       <div>
         <p className="text-[11px] uppercase font-normal text-text-secondary tracking-wide">
-          Sabbatical
+          26/27 Travels
         </p>
         <p className="mt-2 text-[16px] text-text-primary tabular-nums">
           {citiesCount} cities, {countriesCount} countries, {Math.round(miles).toLocaleString()}{" "}

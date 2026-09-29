@@ -13,7 +13,7 @@ type Props = {
 // its own background - that's what lets it slide/resize instead of
 // stretching across both options first.
 export function FilterToggle({ mode, onChange }: Props) {
-  const sabbaticalRef = useRef<HTMLButtonElement>(null);
+  const travelsRef = useRef<HTMLButtonElement>(null);
   const allTimeRef = useRef<HTMLButtonElement>(null);
   const fillRef = useRef<HTMLDivElement>(null);
   const [pressing, setPressing] = useState(false);
@@ -25,11 +25,11 @@ export function FilterToggle({ mode, onChange }: Props) {
   }, []);
 
   useEffect(() => {
-    snapTo(mode === "sabbatical" ? sabbaticalRef.current : allTimeRef.current);
+    snapTo(mode === "travels" ? travelsRef.current : allTimeRef.current);
   }, [mode, snapTo]);
 
   useEffect(() => {
-    const handleResize = () => snapTo(mode === "sabbatical" ? sabbaticalRef.current : allTimeRef.current);
+    const handleResize = () => snapTo(mode === "travels" ? travelsRef.current : allTimeRef.current);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, [mode, snapTo]);
@@ -49,15 +49,15 @@ export function FilterToggle({ mode, onChange }: Props) {
         }`}
       />
       <button
-        ref={sabbaticalRef}
+        ref={travelsRef}
         type="button"
-        aria-pressed={mode === "sabbatical"}
-        onClick={() => onChange("sabbatical")}
+        aria-pressed={mode === "travels"}
+        onClick={() => onChange("travels")}
         className={`relative z-10 px-3 py-1.5 text-[13px] transition-colors duration-200 active:translate-y-px ${
-          mode === "sabbatical" ? "text-white" : "text-text-secondary hover:text-text-primary"
+          mode === "travels" ? "text-white" : "text-text-secondary hover:text-text-primary"
         }`}
       >
-        Sabbatical
+        26/27 travels
       </button>
       <button
         ref={allTimeRef}

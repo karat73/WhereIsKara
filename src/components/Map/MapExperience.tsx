@@ -27,7 +27,7 @@ type Props = {
 
 export function MapExperience({ cities, latestUpdateByVisit, trip }: Props) {
   const [selectedCityId, setSelectedCityId] = useState<string | null>(null);
-  const [mode, setMode] = useState<MapFilterMode>("sabbatical");
+  const [mode, setMode] = useState<MapFilterMode>("travels");
 
   const handleSelectCity = useCallback((city: CityWithVisits) => {
     setSelectedCityId(city.id);
@@ -81,6 +81,8 @@ export function MapExperience({ cities, latestUpdateByVisit, trip }: Props) {
       {selectedCity && (
         <CityPopup
           city={selectedCity}
+          cities={cities}
+          trip={trip}
           latestUpdateByVisit={latestUpdateByVisit}
           onClose={() => setSelectedCityId(null)}
         />

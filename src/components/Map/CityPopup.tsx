@@ -6,11 +6,19 @@ import { useCallback, useState } from "react";
 import { useLocalClock } from "@/hooks/useLocalClock";
 import { useCityWeather } from "@/hooks/useCityWeather";
 import { formatBadgeDate, formatCompactRange, formatRelativeTime } from "@/lib/format";
-import { getPinStatus, getVisitStatus, pickRepresentativeVisit, statusColor } from "@/lib/status";
-import type { CityWithVisits, DailyUpdate, VisitStatus } from "@/lib/types";
+import {
+  getArbitratedPinStatus,
+  getCanonicalCurrentTrip,
+  getVisitStatus,
+  pickRepresentativeVisit,
+  statusColor,
+} from "@/lib/status";
+import type { CityWithVisits, DailyUpdate, Trip, VisitStatus } from "@/lib/types";
 
 type Props = {
   city: CityWithVisits;
+  cities: CityWithVisits[];
+  trip: Trip | null;
   latestUpdateByVisit: Record<string, DailyUpdate>;
   onClose: () => void;
 };
@@ -27,7 +35,7 @@ const badgeStyle: Record<VisitStatus, { bg: string; border: string; text: string
   upcoming: { bg: "transparent", border: "var(--color-blue)", text: "var(--color-blue)" },
 };
 
-export function CityPopup({ city, latestUpdateByVisit, onClose }: Props) {
+export function CityPopup({ city, cities, trip, latestUpdateByVisit, onClose }: Props) {
   const [isClosing, setIsClosing] = useState(false);
 
   const handleClose = useCallback(() => {
@@ -39,10 +47,20 @@ export function CityPopup({ city, latestUpdateByVisit, onClose }: Props) {
 
   const now = new Date();
   const representativeVisit = pickRepresentativeVisit(city.visits, city.timezone, now);
-  const visitStatus: VisitStatus = representativeVisit
-    ? getVisitStatus(representativeVisit, city.timezone, now)
-    : "upcoming";
-  const pinStatus = getPinStatus(city, representativeVisit, now);
+
+  // Arbitrated against every other trip city, not just this one's own
+  // timezone - otherwise this popup could disagree with the map pin (or
+  // another city's popup) about which one is actually current. See
+  // getCanonicalCurrentTrip's comment for why that's a real risk, not a
+  // theoretical one.
+  const canonicalCurrent = getCanonicalCurrentTrip(cities, trip, now);
+  const pinStatus = getArbitratedPinStatus(city, representativeVisit, canonicalCurrent, now);
+  const visitStatus: VisitStatus =
+    pinStatus === "personal"
+      ? representativeVisit
+        ? getVisitStatus(representativeVisit, city.timezone, now)
+        : "upcoming"
+      : pinStatus;
 
   const localTime = useLocalClock(city.timezone);
   const tempC = useCityWeather(city.lat, city.lng);

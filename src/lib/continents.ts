@@ -1,6 +1,6 @@
 // Country -> continent, for the About page's all-time stats. Not stored in
 // the DB since it never changes per-country; just covers every country
-// that appears in the cities table (sabbatical + historic).
+// that appears in the cities table (26/27 + historic).
 const COUNTRY_CONTINENT: Record<string, string> = {
   UK: "Europe",
   Vietnam: "Asia",

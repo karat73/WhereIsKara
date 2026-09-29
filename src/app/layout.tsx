@@ -21,7 +21,7 @@ const plexMono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: "Where in the world is Kara?",
-  description: "A live map of Kara's 6-month sabbatical.",
+  description: "A live map of Kara's 26/27 travels.",
   metadataBase: new URL("https://whereiskara.com"),
 };
 

@@ -1,4 +1,4 @@
--- v1.1: historic (pre-sabbatical) cities and visits, from Kara's flight log.
+-- v1.1: historic (pre-26/27) cities and visits, from Kara's flight log.
 -- Run this ONCE in the Supabase SQL editor. There's no unique constraint on
 -- cities.name, so running it twice will create duplicate rows - it is not
 -- safe to re-run.
