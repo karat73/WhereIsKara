@@ -124,8 +124,8 @@ export function getPinStatus(
   return getVisitStatus(representativeVisit, city.timezone, now);
 }
 
-// A visit "belongs to" the sabbatical if it starts within the trip's date
-// range. Historic (pre-sabbatical) visits fail this, which is what keeps
+// A visit "belongs to" the 26/27 travels if it starts within the trip's
+// date range. Historic (pre-26/27) visits fail this, which is what keeps
 // the route line and the map's auto-flyTo scoped to just this trip even
 // when a city (e.g. one visited long ago) is shown in "all time" mode.
 export function isWithinTrip(visit: Visit, trip: Trip | null): boolean {

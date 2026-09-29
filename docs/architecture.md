@@ -29,7 +29,7 @@ daily_updates   one row per visit holding the latest caption/photo
                           the timeline sorts and dates by this, not by
                           whatever the row was last edited
 
-trip            single row: the sabbatical's date range + last_checked_in
+trip            single row: the 26/27 travels' date range + last_checked_in
 ```
 
 ## Status derivation

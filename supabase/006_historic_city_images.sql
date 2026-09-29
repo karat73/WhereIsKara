@@ -1,5 +1,5 @@
 -- v1.1: city_image_url for the historic cities added in historic_visits_migration.sql.
--- Curated Unsplash photos matching the sabbatical set's vibe (night
+-- Curated Unsplash photos matching the 26/27 set's vibe (night
 -- cityscapes, iconic historic landmarks). Clarksdale, MS uses Kara's own
 -- photo instead (bundled at public/cities/clarksdale.jpg), since it's too
 -- small a town to have dedicated stock photography.

@@ -15,7 +15,7 @@ import { pinSvg } from "@/lib/pinIcon";
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
 
-export type MapFilterMode = "sabbatical" | "all-time";
+export type MapFilterMode = "travels" | "all-time";
 
 type Props = {
   cities: CityWithVisits[];
@@ -50,8 +50,8 @@ export function MapView({ cities, trip, mode, onSelectCity, selectedCityId }: Pr
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "bottom-right");
 
     // The route line and the initial flyTo are always scoped to the
-    // sabbatical, regardless of which pins are currently shown - drawing a
-    // line across 20 years of unrelated trips would be meaningless.
+    // 26/27 travels, regardless of which pins are currently shown - drawing
+    // a line across 20 years of unrelated trips would be meaningless.
     const now = new Date();
     const tripCities = cities.filter((c) => c.pin_type === "trip");
 
@@ -250,7 +250,7 @@ export function MapView({ cities, trip, mode, onSelectCity, selectedCityId }: Pr
 
     const now = new Date();
 
-    // In "sabbatical" mode, only show cities with a visit inside the trip
+    // In "travels" mode, only show cities with a visit inside the trip
     // window (plus the personal/home pin, which is always shown). In
     // "all-time" mode, every city with any visit shows, using its overall
     // representative visit (which may be historic).
@@ -263,7 +263,7 @@ export function MapView({ cities, trip, mode, onSelectCity, selectedCityId }: Pr
 
     visibleCities.forEach((city) => {
       const visitsForStatus =
-        mode === "sabbatical" && city.pin_type !== "personal"
+        mode === "travels" && city.pin_type !== "personal"
           ? city.visits.filter((v) => isWithinTrip(v, trip))
           : city.visits;
       const representativeVisit = pickRepresentativeVisit(visitsForStatus, city.timezone, now);

@@ -1,12 +1,12 @@
 # Where in the world is Kara?
 
-A live pin board tracking a 6-month sabbatical. **[whereiskara.com](https://whereiskara.com)**
+A live pin board tracking Kara's 26/27 travels. **[whereiskara.com](https://whereiskara.com)**
 
 ![Screenshot of the map](docs/screenshot.png)
 
 ## What this is
 
-Medium term: A single place for friends, family and well-wishers to see where I am during a 6 month sabbatical.
+Medium term: A single place for friends, family and well-wishers to see where I am during my 26/27 travels.
 Long term: A travel pin board map that shows where I am right now, where I've been, and where I'm
 headed next.
 

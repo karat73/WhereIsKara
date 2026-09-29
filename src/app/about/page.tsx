@@ -34,7 +34,7 @@ export default async function AboutPage() {
   }
   const dayLabel = trip ? tripDay(trip.start_date, trip.end_date, now) : null;
 
-  // All-time: every city with at least one visit, sabbatical or historic.
+  // All-time: every city with at least one visit, 26/27 or historic.
   const everVisitedCities = cities.filter((c) => c.pin_type === "trip" && c.visits.length > 0);
   const allTimeCitiesCount = everVisitedCities.length;
   const allTimeCountries = new Set(everVisitedCities.map((c) => c.country));
@@ -98,7 +98,7 @@ export default async function AboutPage() {
           <li>
             <p className="text-text-primary font-medium">v1.1 &ndash; 10 August 2026</p>
             <p>
-              Visits data model (repeat stays), historic trips mapped in, a Sabbatical/All-time
+              Visits data model (repeat stays), historic trips mapped in, a 26/27 Travels/All-time
               map filter, &ldquo;I&rsquo;m safe&rdquo; check-in, redesigned popup and timeline,
               trip stats, new design system.
             </p>
