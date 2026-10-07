@@ -13,7 +13,7 @@ export default async function HomePage() {
   ]);
 
   return (
-    <div className="relative h-screen w-screen overflow-hidden">
+    <div className="relative h-dvh w-screen overflow-hidden">
       <MapExperience cities={cities} latestUpdateByVisit={latestUpdateByVisit} trip={trip} />
     </div>
   );
