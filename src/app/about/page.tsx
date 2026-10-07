@@ -2,6 +2,7 @@ import { getAllDailyUpdates, getCitiesWithVisits, getTrip } from "@/lib/data";
 import {
   getArbitratedPinStatus,
   getCanonicalCurrentTrip,
+  isWithinTrip,
   pickRepresentativeVisit,
   tripDay,
 } from "@/lib/status";
@@ -24,24 +25,37 @@ export default async function AboutPage() {
   // counted as "traveled" an hour early during a changeover between two
   // cities in different timezones.
   const canonicalCurrent = getCanonicalCurrentTrip(cities, trip, now);
-  const traveledCities = cities
+  // Scoped to visits inside the 26/27 trip, same as the map's travels mode.
+  // Without this, every historic city (already "visited") gets counted too.
+  const traveledStops = cities
     .filter((c) => c.pin_type === "trip")
-    .map((c) => ({ city: c, visit: pickRepresentativeVisit(c.visits, c.timezone, now) }))
+    .map((c) => ({
+      city: c,
+      visit: pickRepresentativeVisit(
+        c.visits.filter((v) => isWithinTrip(v, trip)),
+        c.timezone,
+        now
+      ),
+    }))
     .filter(
       (x) => x.visit && getArbitratedPinStatus(x.city, x.visit, canonicalCurrent, now) !== "upcoming"
     )
-    .sort((a, b) => a.visit!.start_date.localeCompare(b.visit!.start_date))
-    .map((x) => x.city);
+    .sort((a, b) => a.visit!.start_date.localeCompare(b.visit!.start_date));
 
+  const traveledCities = traveledStops.map((x) => x.city);
   const citiesCount = traveledCities.length;
   const countriesCount = new Set(traveledCities.map((c) => c.country)).size;
+
+  // Day trips are spurs off a stay, not part of the route, so they count as
+  // cities but stay out of the mileage chain (matches the map's route line).
+  const routeCities = traveledStops.filter((x) => !x.visit!.is_day_trip).map((x) => x.city);
   let miles = 0;
-  for (let i = 1; i < traveledCities.length; i++) {
+  for (let i = 1; i < routeCities.length; i++) {
     miles += haversineMiles(
-      traveledCities[i - 1].lat,
-      traveledCities[i - 1].lng,
-      traveledCities[i].lat,
-      traveledCities[i].lng
+      routeCities[i - 1].lat,
+      routeCities[i - 1].lng,
+      routeCities[i].lat,
+      routeCities[i].lng
     );
   }
   const dayLabel = trip ? tripDay(trip.start_date, trip.end_date, now) : null;
@@ -98,6 +112,14 @@ export default async function AboutPage() {
 
         <h2 className="font-display text-[25px] mt-10 mb-3">Changelog</h2>
         <ul className="space-y-4 text-text-secondary leading-relaxed">
+          <li>
+            <p className="text-text-primary font-medium">v1.3 &ndash; 7 October 2026</p>
+            <p>
+              Nov/Dec itinerary reworked, with Sun Moon Lake, Da Nang and Hue added to the map.
+              Added proper error and 404 pages, the site now retries if the database hiccups
+              instead of falling over, and fixed the map height on iPhone Safari.
+            </p>
+          </li>
           <li>
             <p className="text-text-primary font-medium">v1.2 &ndash; 22 September 2026</p>
             <p>
