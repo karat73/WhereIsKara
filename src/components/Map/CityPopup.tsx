@@ -98,6 +98,7 @@ export function CityPopup({ city, cities, trip, latestUpdateByVisit, onClose }: 
           only taps on the map above it do. */}
       <div className="fixed inset-0 z-30 sm:hidden" onClick={handleClose} aria-hidden="true" />
       <div
+        data-city-popup
         className={`
           fixed z-40 bg-surface overflow-y-auto overscroll-contain
           inset-x-0 bottom-0 max-h-[85dvh] rounded-t-[14px] border-t-[3px]
@@ -116,7 +117,7 @@ export function CityPopup({ city, cities, trip, latestUpdateByVisit, onClose }: 
           <button
             onClick={handleClose}
             aria-label="Close"
-            className="shrink-0 w-9 h-9 rounded-full border border-[var(--color-line)] bg-[var(--color-card)] flex items-center justify-center transition-[background-color] duration-[80ms] ease-out active:translate-y-px active:bg-[var(--color-line)]"
+            className="relative shrink-0 w-9 h-9 rounded-[2px] border border-[var(--color-line)] bg-[var(--color-card)] flex items-center justify-center transition-[background-color] duration-[80ms] ease-out active:translate-y-px active:bg-[var(--color-line)] before:absolute before:-inset-1 before:content-['']"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path

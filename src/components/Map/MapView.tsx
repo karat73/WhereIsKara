@@ -8,6 +8,7 @@ import {
   getArbitratedPinStatus,
   getCanonicalCurrentTrip,
   getStaySequence,
+  getVisitStatus,
   isWithinTrip,
   pickRepresentativeVisit,
   statusColor,
@@ -67,94 +68,95 @@ export function MapView({ cities, trip, mode, onSelectCity, selectedCityId }: Pr
 
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "bottom-right");
 
-    // The route line and the initial flyTo are always scoped to the
-    // 26/27 travels, regardless of which pins are currently shown - drawing
-    // a line across 20 years of unrelated trips would be meaningless.
+    // The route lines and the initial flyTo are always scoped to the 26/27
+    // travels, regardless of which pins are currently shown. Only two legs
+    // are drawn: the one Kara just came in on (solid) and the one she's
+    // heading out on next (dashed, arrowed). Older history isn't drawn.
     const now = new Date();
     const tripCities = cities.filter((c) => c.pin_type === "trip");
 
-    // Day trips never determine where Kara "is" - they're excluded from
-    // the route/arrow sequence entirely (a day-trip-only city like Ha Long
-    // Bay just won't have a representative visit here and drops out).
-    const withRepVisit = tripCities
-      .map((city) => ({
-        city,
-        visit: pickRepresentativeVisit(
-          city.visits.filter((v) => isWithinTrip(v, trip) && !v.is_day_trip),
-          city.timezone,
-          now
-        ),
-      }))
-      .filter(
-        (x): x is { city: (typeof tripCities)[number]; visit: NonNullable<typeof x.visit> } =>
-          x.visit !== null
-      );
+    // One entry per stay, not per city, so a repeat stop (e.g. Taipei, out to
+    // Sun Moon Lake and back) is a real "next" leg. Day trips never determine
+    // where Kara "is", so they're left out of the sequence entirely.
+    const stays = tripCities.flatMap((city) =>
+      city.visits
+        .filter((v) => isWithinTrip(v, trip) && !v.is_day_trip)
+        .map((visit) => ({ data: city, visit, timezone: city.timezone }))
+    );
 
     // Current/upcoming are derived positionally from the sorted sequence of
     // stays, not independently per city - this is what keeps the route and
     // arrow correct on a changeover day (one stay ending exactly when the
     // next begins).
-    const { current, visited, future } = getStaySequence(
-      withRepVisit.map((x) => ({ data: x.city, visit: x.visit, timezone: x.city.timezone })),
-      now
-    );
+    const { current, visited, future } = getStaySequence(stays, now);
 
-    const traveled = [...visited, ...(current ? [current] : [])].map((x) => x.data);
-    const upcomingPath = [...(current ? [current] : []), ...future].map((x) => x.data);
-    const currentEntry = current ? { city: current.data } : null;
+    type LatLng = { lng: number; lat: number };
+    const previous: LatLng | undefined = visited[visited.length - 1]?.data;
+    const here: LatLng | undefined = current?.data;
 
-    // Static spur lines from each day trip's parent stay to the day trip's
-    // own city, e.g. Hanoi -> Ha Long Bay. Computed once from all cities
-    // (not just tripCities) since a day-trip city's only visit is the day
-    // trip itself, so it never appears in withRepVisit above.
-    const daytripSpurs: { from: [number, number]; to: [number, number] }[] = [];
+    // While Kara is on a day trip, the incoming leg is parent stay -> day
+    // trip city (she's out from the parent, not in from the previous stop).
+    let incomingFrom: LatLng | undefined = here ? previous : undefined;
+    let incomingTo: LatLng | undefined = here;
     for (const city of cities) {
       for (const visit of city.visits) {
         if (!visit.is_day_trip || !visit.parent_visit_id) continue;
+        if (getVisitStatus(visit, city.timezone, now) !== "current") continue;
         const parentCity = cities.find((c) => c.visits.some((v) => v.id === visit.parent_visit_id));
         if (parentCity) {
-          daytripSpurs.push({ from: [parentCity.lng, parentCity.lat], to: [city.lng, city.lat] });
+          incomingFrom = parentCity;
+          incomingTo = city;
         }
       }
     }
 
+    // Between stays (no current one) there's nothing to be "incoming" to, so
+    // just show the leg from the last stop to the next.
+    const outgoingFrom = here ?? previous;
+
+    // Every leg still to come, one feature per leg so "line-center" puts one
+    // arrow on each rather than spacing them along the whole path.
+    const upcomingPath: LatLng[] = [
+      ...(outgoingFrom ? [outgoingFrom] : []),
+      ...future.map((x) => x.data),
+    ];
+
+    const legFeatures = (from: LatLng | undefined, to: LatLng | undefined) =>
+      from && to && (from.lng !== to.lng || from.lat !== to.lat)
+        ? [
+            {
+              type: "Feature" as const,
+              properties: {},
+              geometry: {
+                type: "LineString" as const,
+                coordinates: subdivideLine([from.lng, from.lat], [to.lng, to.lat]),
+              },
+            },
+          ]
+        : [];
+
+    const currentEntry = current ? { city: current.data } : null;
+
     map.on("load", () => {
-      map.addSource("route-traveled", {
+      map.addSource("route-incoming", {
         type: "geojson",
-        data: {
-          type: "Feature",
-          properties: {},
-          geometry: { type: "LineString", coordinates: traveled.map((c) => [c.lng, c.lat]) },
-        },
+        data: { type: "FeatureCollection", features: legFeatures(incomingFrom, incomingTo) },
       });
       map.addLayer({
-        id: "route-traveled",
+        id: "route-incoming",
         type: "line",
-        source: "route-traveled",
+        source: "route-incoming",
         paint: {
           "line-color": "#8F9296",
           "line-width": 1.75,
         },
       });
 
-      // One feature per leg (not one feature for the whole path) so
-      // "line-center" symbol placement puts exactly one arrow per leg,
-      // instead of every 250px along the entire multi-stop path.
       map.addSource("route-upcoming", {
         type: "geojson",
         data: {
           type: "FeatureCollection",
-          features: upcomingPath.slice(0, -1).map((c, i) => ({
-            type: "Feature",
-            properties: {},
-            geometry: {
-              type: "LineString",
-              coordinates: subdivideLine(
-                [c.lng, c.lat],
-                [upcomingPath[i + 1].lng, upcomingPath[i + 1].lat]
-              ),
-            },
-          })),
+          features: upcomingPath.slice(0, -1).flatMap((c, i) => legFeatures(c, upcomingPath[i + 1])),
         },
       });
       map.addLayer({
@@ -191,43 +193,6 @@ export function MapView({ cities, trip, mode, onSelectCity, selectedCityId }: Pr
         id: "route-upcoming-arrows",
         type: "symbol",
         source: "route-upcoming",
-        layout: {
-          "symbol-placement": "line-center",
-          "icon-image": "route-arrow",
-          "icon-size": 1.4,
-          "icon-rotation-alignment": "map",
-          "icon-allow-overlap": true,
-          "icon-ignore-placement": true,
-        },
-      });
-
-      // Styled the same as the upcoming route (blue, dashed, arrowed) since
-      // it's a one-way "out from the parent stay" line, not a there-and-back.
-      map.addSource("day-trip-spurs", {
-        type: "geojson",
-        data: {
-          type: "FeatureCollection",
-          features: daytripSpurs.map((s) => ({
-            type: "Feature",
-            properties: {},
-            geometry: { type: "LineString", coordinates: subdivideLine(s.from, s.to) },
-          })),
-        },
-      });
-      map.addLayer({
-        id: "day-trip-spurs",
-        type: "line",
-        source: "day-trip-spurs",
-        paint: {
-          "line-color": "#2C4A7C",
-          "line-width": 1.75,
-          "line-dasharray": [0, 4, 3],
-        },
-      });
-      map.addLayer({
-        id: "day-trip-spur-arrows",
-        type: "symbol",
-        source: "day-trip-spurs",
         layout: {
           "symbol-placement": "line-center",
           "icon-image": "route-arrow",
@@ -320,12 +285,40 @@ export function MapView({ cities, trip, mode, onSelectCity, selectedCityId }: Pr
     };
   }, [cities, trip, mode, onSelectCity]);
 
+  // The popup covers the right side of the map on desktop and the bottom on
+  // mobile. Padding shifts the map's visual centre into the part that's still
+  // visible, so the selected pin sits in the middle of that instead of
+  // against the panel edge. Reset to zero when the popup closes.
+  const hadPaddingRef = useRef(false);
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !selectedCityId) return;
+    if (!map) return;
+
+    if (!selectedCityId) {
+      if (hadPaddingRef.current) {
+        hadPaddingRef.current = false;
+        map.easeTo({ padding: { top: 0, right: 0, bottom: 0, left: 0 }, duration: 400 });
+      }
+      return;
+    }
+
     const city = cities.find((c) => c.id === selectedCityId);
     if (!city) return;
-    map.flyTo({ center: [city.lng, city.lat], zoom: Math.max(map.getZoom(), 4), speed: 0.8 });
+
+    const panel = document.querySelector<HTMLElement>("[data-city-popup]");
+    const isDesktop = window.matchMedia("(min-width: 640px)").matches;
+    hadPaddingRef.current = true;
+    map.easeTo({
+      center: [city.lng, city.lat],
+      zoom: Math.max(map.getZoom(), 4),
+      padding: {
+        top: 0,
+        left: 0,
+        right: isDesktop && panel ? panel.offsetWidth : 0,
+        bottom: !isDesktop && panel ? panel.offsetHeight : 0,
+      },
+      duration: 800,
+    });
   }, [selectedCityId, cities]);
 
   return (

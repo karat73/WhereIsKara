@@ -96,22 +96,16 @@ export default async function AboutPage() {
           in a while feel free to panic.
         </p>
 
-        <h2 className="font-display text-[25px] mt-10 mb-3">Decisions for V1</h2>
-        <ul className="space-y-3 text-text-secondary leading-relaxed list-disc pl-5">
-          <li>Mapbox &gt; OpenStreetMap due to the ease of styling.</li>
-          <li>
-            The early plan included blog entries and photo uploads but once sketched out felt
-            v 2009. One-line status updates are used instead, kind of like IG stories without
-            using a Meta product. Aiming for this site to be a live pin board, not a blog.
-          </li>
-          <li>
-            The timeline is there to collate daily updates and will be expanded on in later
-            updates.
-          </li>
-        </ul>
-
         <h2 className="font-display text-[25px] mt-10 mb-3">Changelog</h2>
         <ul className="space-y-4 text-text-secondary leading-relaxed">
+          <li>
+            <p className="text-text-primary font-medium">v1.4 &ndash; 24 October 2026</p>
+            <p>
+              Removed route history from the map, with flights doubling back across the region it
+              was looking messy. The map now shows just one historic journey (where I came from)
+              and where I&rsquo;m going next.
+            </p>
+          </li>
           <li>
             <p className="text-text-primary font-medium">v1.3 &ndash; 7 October 2026</p>
             <p>
@@ -144,6 +138,20 @@ export default async function AboutPage() {
           <li>
             <p className="text-text-primary font-medium">v1.0 &ndash; 26 July 2026</p>
             <p>Map, current location, check-ins, popup content, route lines.</p>
+          </li>
+        </ul>
+
+        <h2 className="font-display text-[25px] mt-10 mb-3">Decisions for V1</h2>
+        <ul className="space-y-3 text-text-secondary leading-relaxed list-disc pl-5">
+          <li>Mapbox &gt; OpenStreetMap due to the ease of styling.</li>
+          <li>
+            The early plan included blog entries and photo uploads but once sketched out felt
+            v 2009. One-line status updates are used instead, kind of like IG stories without
+            using a Meta product. Aiming for this site to be a live pin board, not a blog.
+          </li>
+          <li>
+            The timeline is there to collate daily updates and will be expanded on in later
+            updates.
           </li>
         </ul>
 

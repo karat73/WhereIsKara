@@ -178,6 +178,10 @@ export function getArbitratedPinStatus(
   now: Date = new Date()
 ): PinStatus {
   const status = getPinStatus(city, representativeVisit, now);
+  // Day trips are never in the stay sequence the canonical current is derived
+  // from, so there's nothing to arbitrate against: without this a day trip
+  // reads "upcoming" on the day itself (its start is after its parent's).
+  if (representativeVisit?.is_day_trip) return status;
   if (status !== "current" || !canonicalCurrent || city.id === canonicalCurrent.cityId) {
     return status;
   }
