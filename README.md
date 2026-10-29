@@ -65,7 +65,7 @@ docs/             architecture notes and an example feature spec
 ## Getting started
 
 ```bash
-git clone https://github.com/karat73/WhereIsKara.git
+git clone https://github.com/karatravadi/WhereIsKara.git
 cd WhereIsKara
 npm install
 ```

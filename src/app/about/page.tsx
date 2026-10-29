@@ -178,7 +178,7 @@ export default async function AboutPage() {
 
         <p className="mt-2 text-sm text-text-muted">
           <a
-            href="https://github.com/karat73/WhereIsKara"
+            href="https://github.com/karatravadi/WhereIsKara"
             target="_blank"
             rel="noopener noreferrer"
             className="text-accent hover:text-accent-hover underline"

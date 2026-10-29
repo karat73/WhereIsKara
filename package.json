@@ -4,10 +4,10 @@
   "description": "A live pin board tracking Kara's 26/27 travels, built with Next.js, Supabase and Mapbox.",
   "private": true,
   "license": "MIT",
-  "author": "Kara <https://github.com/karat73>",
+  "author": "Kara <https://github.com/karatravadi>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/karat73/WhereIsKara.git"
+    "url": "https://github.com/karatravadi/WhereIsKara.git"
   },
   "scripts": {
     "dev": "next dev",
